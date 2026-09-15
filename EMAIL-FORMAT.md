@@ -133,9 +133,57 @@ client could open for examples.
 The exact example wording lives in `lib/questions-fos.js` and is asserted
 against the rendered form by `tests/questions.test.js`.
 
-If the client typed anything in the follow-up free text, its exact approved
-question is reproduced with their answer in its own block,
-`FOS_VULNERABILITY_DETAIL`.
+Two free-text blocks sit beneath the categories, and they are different things:
+
+- `FOS_VULNERABILITY_EXPLANATION` — the approved follow-up, present only when a
+  category was selected, and always answered (see **Conditional follow-ups**);
+- `FOS_VULNERABILITY_DETAIL` — the source PDF's own optional "anything else"
+  question, always present, and `Not provided` when left blank.
+
+## Conditional follow-ups
+
+Six questions are follow-ups, shown only when the answer above them opens them.
+Each has its own stable id and, in the record, its own block carrying the full
+approved question:
+
+| Block id | Question | Opened by |
+|---|---|---|
+| `FOS_VULNERABILITY_EXPLANATION` | Please briefly tell us what applied to you. | any vulnerability category selected |
+| `FOS_SAVINGS_AMOUNT` | Approximately how much did you have in savings? | savings = Yes |
+| `FOS_DEPENDANTS_COUNT` | How many dependants did you have? | dependants = Yes |
+| `FOS_FURTHER_LENDING_TYPE` | What type of further lending did you apply for? | further lending = Yes |
+| `FOS_FURTHER_LENDING_LENDER` | Who was the further lending with? | further lending = Yes |
+| `FOS_FURTHER_LENDING_AMOUNT` | Approximately how much was the further lending for? | further lending = Yes |
+
+When a branch was not taken its block is **absent from the record entirely** -
+not present-but-blank. A parser should treat a missing block as "the client was
+never asked", which is different from "the client did not answer".
+
+`FOS_VULNERABILITY_DETAIL` is unrelated: it is the source PDF's own optional
+free-text question and is always present.
+
+### Explicit alternatives
+
+Each follow-up, and the lending start date, offers an explicit alternative to
+answering. Choosing one is a real answer and is recorded as itself:
+
+```
+[FOS_SAVINGS_AMOUNT]
+QUESTION:
+  Approximately how much did you have in savings?
+CLIENT ANSWER:
+  I don't know
+```
+
+Never as `Not provided`, never as a blank, and never as a fabricated `£0` or
+`0`. The approved wording is `I don't know` for every follow-up except the
+vulnerability explanation, which uses
+`I don't know / prefer not to add details`, and the lending start date, which
+uses `I don't know the exact date`.
+
+The three further-lending answers are independent. A client who remembers the
+lender but not the amount produces a record naming the lender and recording
+`I don't know` for the amount only.
 
 ## Financial output
 

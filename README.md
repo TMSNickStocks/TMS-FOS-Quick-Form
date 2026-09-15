@@ -25,18 +25,38 @@ modify TMS-Timebar-Quick-Form or TMS-Timebar-Portal.**
 | FOS | `FOS Q's for clients.pdf` | `tests/questions.test.js` asserts every question, heading, note, option and example appears verbatim in `public/index.html` |
 | Time-Bar | the live, approved TMS-Timebar-Quick-Form | reproduced byte-for-byte; a locked SHA-256 of the approved wording in `tests/validation.test.js` fails the build on any edit |
 
-No question has been reworded, expanded, reordered or simplified, and no extra
-question has been added.
+No source question has been reworded, expanded, reordered or simplified.
 
-Two changes were made on TMS instruction on 2026-09-15, and only these two:
+Three changes were made on TMS instruction on 2026-09-15, and only these three.
+Each is marked in place in `lib/questions-fos.js`; anything without such a
+marker is source wording and must not be edited.
 
 1. **Presentation headings** for sections 1 and 6 (see "Source ambiguities"
    below). Headings only — no question, option, example or evidence wording was
    touched.
 2. **One added answer:** `I don't know the exact date`, offered against the
-   otherwise unchanged question `When did the lending start?`. No other
-   "I don't know" or equivalent answer exists anywhere in the FOS questions, and
-   a test fails the build if one is added.
+   otherwise unchanged question `When did the lending start?`.
+3. **Six conditional follow-ups** (approved 2026-09-15), each shown only when
+   the answer above it opens it, and each offering an explicit alternative to
+   answering:
+
+   | Opened by | Follow-up |
+   |---|---|
+   | any vulnerability category | Please briefly tell us what applied to you. |
+   | savings = Yes | Approximately how much did you have in savings? |
+   | dependants = Yes | How many dependants did you have? |
+   | further lending = Yes | What type of further lending did you apply for? |
+   | further lending = Yes | Who was the further lending with? |
+   | further lending = Yes | Approximately how much was the further lending for? |
+
+   The source questionnaire records a bare Yes for savings, dependants and
+   further lending; these capture the substance behind it. The conditional
+   rules are enforced server side as well as in the browser: a follow-up
+   answered against a branch that was not taken is rejected as contradictory,
+   and an opened branch must carry exactly one of the value or its alternative.
+
+   The approved set of alternatives is fixed, and a test fails the build if one
+   is added, removed or reworded.
 
 ---
 

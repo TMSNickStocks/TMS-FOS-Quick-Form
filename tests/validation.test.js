@@ -10,6 +10,7 @@ const { VULNERABILITY_VALUES, VULNERABILITY_NONE } = require('../lib/questions-f
 
 const FOS_ANSWERS = {
   fosVulnerabilities: [VULNERABILITY_VALUES[0]],
+  fosVulnerabilityExplanation: 'I was unwell for a long period.',
   fosVulnerabilityDetail: '',
   fosCourtAction: 'No',
   fosLendingStart: '2015-06-01',
@@ -19,7 +20,7 @@ const FOS_ANSWERS = {
   fosSavings: 'No',
   fosOutHousing: '600', fosOutUtilities: '150', fosOutFood: '250', fosOutTransport: '',
   fosOtherExpenses: '',
-  fosDependants: 'Yes',
+  fosDependants: 'Yes', fosDependantsCount: '2',
   fosFurtherLending: 'No'
 };
 const TIMEBAR_ANSWERS = {
@@ -113,9 +114,16 @@ test('invented, duplicated or overlong vulnerability values are rejected', () =>
   assert.ok(vulnerabilities([{ toString: () => VULNERABILITY_VALUES[0] }]).error, 'non-string rejected');
 });
 
-test('a vulnerability selection never forces the client to type an explanation', () => {
-  const r = validateSubmission(base({ fosVulnerabilities: VULNERABILITY_VALUES.slice(0, 4), fosVulnerabilityDetail: '' }));
-  assert.equal(r.ok, true, 'the source questionnaire does not require details, so neither does the form');
+test('the source PDF’s own optional free-text box stays optional', () => {
+  // TMS approved a separate required follow-up (covered below). The source
+  // questionnaire's own "anything else" box is still optional and must not
+  // become mandatory as a side effect.
+  const r = validateSubmission(base({
+    fosVulnerabilities: VULNERABILITY_VALUES.slice(0, 4),
+    fosVulnerabilityExplanation: 'One combined explanation.',
+    fosVulnerabilityDetail: ''
+  }));
+  assert.equal(r.ok, true);
 });
 
 // -------------------------------------------------------------------- mode

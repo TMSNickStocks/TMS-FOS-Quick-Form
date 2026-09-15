@@ -34,13 +34,19 @@ CLIENT ANSWER:
   not selected: You sometimes need extra help to understand information or make decisions
   not selected: None of these apply
 
+[FOS_VULNERABILITY_EXPLANATION]
+QUESTION:
+  Please briefly tell us what applied to you.
+CLIENT ANSWER:
+  I was signed off work for several months with a health condition, and money was very tight the whole time.
+
 [FOS_VULNERABILITY_DETAIL]
 QUESTION:
   If there’s anything else you’d like to tell us about this, you can do so here
 NOTE:
   Optional.
 CLIENT ANSWER:
-  I was signed off work for several months and found the paperwork hard to follow.
+  I found the paperwork hard to follow.
 
 [FOS_COURT_ACTION] 2. Has there been any court action related to the complaint (or is any planned)?
 QUESTION:
@@ -83,7 +89,13 @@ CLIENT ANSWER:
 QUESTION:
   Did you have any savings at the time of the initial lending?
 CLIENT ANSWER:
-  No
+  Yes
+
+[FOS_SAVINGS_AMOUNT]
+QUESTION:
+  Approximately how much did you have in savings?
+CLIENT ANSWER:
+  £350.00 [value: 350]
 
 [FOS_OUTGOINGS]
 QUESTION:
@@ -106,11 +118,35 @@ QUESTION:
 CLIENT ANSWER:
   Yes
 
+[FOS_DEPENDANTS_COUNT]
+QUESTION:
+  How many dependants did you have?
+CLIENT ANSWER:
+  2
+
 [FOS_FURTHER_LENDING]
 QUESTION:
   Did you apply for any further lending?
 CLIENT ANSWER:
   Yes
+
+[FOS_FURTHER_LENDING_TYPE]
+QUESTION:
+  What type of further lending did you apply for?
+CLIENT ANSWER:
+  Credit card
+
+[FOS_FURTHER_LENDING_LENDER]
+QUESTION:
+  Who was the further lending with?
+CLIENT ANSWER:
+  Barclays
+
+[FOS_FURTHER_LENDING_AMOUNT]
+QUESTION:
+  Approximately how much was the further lending for?
+CLIENT ANSWER:
+  I don’t know
 
 CONFIRMATION
 

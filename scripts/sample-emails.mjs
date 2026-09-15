@@ -11,18 +11,26 @@ const META = { submissionId: 'SAMPLE-ONLY-NOT-A-REAL-SUBMISSION', completedAt: '
 const FOS = {
   clientName: 'Alex Sample', reference: '200000001', lender: 'Example Bank plc', product: 'Credit card',
   fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[2]],
-  fosVulnerabilityDetail: 'I was signed off work for several months and found the paperwork hard to follow.',
+  fosVulnerabilityExplanation: 'I was signed off work for several months with a health condition, and money was very tight the whole time.',
+  fosVulnerabilityDetail: 'I found the paperwork hard to follow.',
   fosCourtAction: 'No',
   fosLendingStart: '2016-04-18',
   fosLendingStartUnknown: false,
   fosLendingAmount: '1200',
   fosBalancesPaid: 'Yes',
   fosIncomeEmployment: '1450.00', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
-  fosSavings: 'No',
+  fosSavings: 'Yes',
+  fosSavingsAmount: '350',
   fosOutHousing: '620', fosOutUtilities: '180.50', fosOutFood: '260', fosOutTransport: '95',
   fosOtherExpenses: 'Mobile phone contract and a small catalogue repayment.',
   fosDependants: 'Yes',
-  fosFurtherLending: 'Yes'
+  fosDependantsCount: '2',
+  // The worked example from the brief: the type and lender are remembered,
+  // the amount is not.
+  fosFurtherLending: 'Yes',
+  fosFurtherLendingType: 'Credit card',
+  fosFurtherLendingLender: 'Barclays',
+  fosFurtherLendingAmountUnknown: true
 };
 const TIMEBAR = {
   communicationEvent: 'an annual statement showing the credit limit increase', communicationDate: 'March 2019',
@@ -41,7 +49,15 @@ const out = [
   ['fos-only', { ...FOS, mode: 'FOS_ONLY' }],
   // The combined example also exercises the approved "I don't know the exact
   // date" answer, so both lending-date paths appear in the worked examples.
-  ['timebar-and-fos', { ...FOS, ...TIMEBAR, mode: 'TIMEBAR_AND_FOS', fosLendingStart: '', fosLendingStartUnknown: true }]
+  // The combined sample exercises the other side of each alternative: the
+  // lending date, the savings amount and the dependants count are all unknown.
+  ['timebar-and-fos', {
+    ...FOS, ...TIMEBAR, mode: 'TIMEBAR_AND_FOS',
+    fosLendingStart: '', fosLendingStartUnknown: true,
+    fosSavingsAmount: '', fosSavingsAmountUnknown: true,
+    fosDependantsCount: '', fosDependantsCountUnknown: true,
+    fosVulnerabilityExplanation: '', fosVulnerabilityExplanationDeclined: true
+  }]
 ];
 for (const [name, data] of out) {
   const { text, html } = buildEmail(data, META);

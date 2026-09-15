@@ -49,7 +49,8 @@ const MATTER_FOS = { mode: MODE_FOS_ONLY, clientName: 'Test Person', reference: 
 const MATTER_COMBINED = { ...MATTER_FOS, mode: MODE_TIMEBAR_AND_FOS, communicationEvent: 'a test annual statement', communicationDate: 'March 2020' };
 
 const FOS_ANSWERS = {
-  fosVulnerabilities: [VULNERABILITY_VALUES[0]], fosVulnerabilityDetail: '',
+  fosVulnerabilities: [VULNERABILITY_VALUES[0]],
+  fosVulnerabilityExplanation: 'Synthetic explanation.', fosVulnerabilityDetail: '',
   fosCourtAction: 'No', fosLendingStart: '2015-06-01', fosLendingAmount: '5000', fosBalancesPaid: 'Yes',
   fosIncomeEmployment: '1500', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
   fosSavings: 'No',

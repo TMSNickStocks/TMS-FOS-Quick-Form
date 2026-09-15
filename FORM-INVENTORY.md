@@ -71,6 +71,8 @@ form. Omitted entirely in `FOS_ONLY`.
 | Block ID | Field | Control | Required | Max / format |
 |---|---|---|---|---|
 | `FOS_VULNERABILITY` | `fosVulnerabilities` | 5 checkboxes | yes, at least one | array of approved option strings |
+| `FOS_VULNERABILITY_EXPLANATION` | `fosVulnerabilityExplanation` | textarea | yes, when a category is selected | 1400 |
+| `FOS_VULNERABILITY_EXPLANATION` | `fosVulnerabilityExplanationDeclined` | checkbox | no | boolean; mutually exclusive with the text |
 | `FOS_VULNERABILITY_DETAIL` | `fosVulnerabilityDetail` | textarea | no | 1400 |
 | `FOS_COURT_ACTION` | `fosCourtAction` | radio Yes/No | yes | — |
 | `FOS_LENDING_START` | `fosLendingStart` | date | yes, unless the client does not know it | real past date, ≥ 1900, not future |
@@ -82,13 +84,23 @@ form. Omitted entirely in `FOS_ONLY`.
 | `FOS_INCOME` | `fosIncomeMaintenance` | text, decimal keypad | no | pounds |
 | `FOS_INCOME` | `fosIncomePension` | text, decimal keypad | no | pounds |
 | `FOS_SAVINGS` | `fosSavings` | radio Yes/No | yes | — |
+| `FOS_SAVINGS_AMOUNT` | `fosSavingsAmount` | text, decimal keypad | yes, when savings = Yes | pounds |
+| `FOS_SAVINGS_AMOUNT` | `fosSavingsAmountUnknown` | checkbox | no | boolean; mutually exclusive with the amount |
 | `FOS_OUTGOINGS` | `fosOutHousing` | text, decimal keypad | no | pounds |
 | `FOS_OUTGOINGS` | `fosOutUtilities` | text, decimal keypad | no | pounds |
 | `FOS_OUTGOINGS` | `fosOutFood` | text, decimal keypad | no | pounds |
 | `FOS_OUTGOINGS` | `fosOutTransport` | text, decimal keypad | no | pounds |
 | `FOS_OTHER_EXPENSES` | `fosOtherExpenses` | textarea | no | 1400 |
 | `FOS_DEPENDANTS` | `fosDependants` | radio Yes/No | yes | — |
+| `FOS_DEPENDANTS_COUNT` | `fosDependantsCount` | text, numeric keypad | yes, when dependants = Yes | whole number, 1–50 |
+| `FOS_DEPENDANTS_COUNT` | `fosDependantsCountUnknown` | checkbox | no | boolean; mutually exclusive with the count |
 | `FOS_FURTHER_LENDING` | `fosFurtherLending` | radio Yes/No | yes | — |
+| `FOS_FURTHER_LENDING_TYPE` | `fosFurtherLendingType` | text | yes, when further lending = Yes | 300 |
+| `FOS_FURTHER_LENDING_TYPE` | `fosFurtherLendingTypeUnknown` | checkbox | no | boolean; mutually exclusive with the text |
+| `FOS_FURTHER_LENDING_LENDER` | `fosFurtherLendingLender` | text | yes, when further lending = Yes | 300 |
+| `FOS_FURTHER_LENDING_LENDER` | `fosFurtherLendingLenderUnknown` | checkbox | no | boolean; mutually exclusive with the text |
+| `FOS_FURTHER_LENDING_AMOUNT` | `fosFurtherLendingAmount` | text, decimal keypad | yes, when further lending = Yes | pounds |
+| `FOS_FURTHER_LENDING_AMOUNT` | `fosFurtherLendingAmountUnknown` | checkbox | no | boolean; mutually exclusive with the amount |
 
 ### Vulnerability options (exact, in source order)
 
@@ -101,8 +113,9 @@ form. Omitted entirely in `FOS_ONLY`.
 "None of these apply" is mutually exclusive with the other four, enforced in the
 browser **and** on the server.
 
-Selecting a vulnerability category never obliges the client to type an
-explanation: the source questionnaire does not require it.
+Selecting a category opens the approved follow-up below, which the client
+answers either in their own words or by declining. The source PDF's own
+optional "anything else" box stays optional and is never made mandatory.
 
 ### Lending start date
 
@@ -118,6 +131,35 @@ ticking **I don't know the exact date**.
 - The review page shows `I don't know the exact date`.
 - The record reproduces the full question and records
   `CLIENT ANSWER: I don't know the exact date`.
+
+### Conditional follow-ups (approved 2026-09-15)
+
+The source questionnaire records a bare Yes for savings, dependants and further
+lending, and records which vulnerability categories applied without asking what
+happened. These follow-ups capture the substance.
+
+| Opened by | Follow-up | Alternative |
+|---|---|---|
+| any vulnerability category selected | Please briefly tell us what applied to you. | I don't know / prefer not to add details |
+| savings = Yes | Approximately how much did you have in savings? | I don't know |
+| dependants = Yes | How many dependants did you have? | I don't know |
+| further lending = Yes | What type of further lending did you apply for? | I don't know |
+| further lending = Yes | Who was the further lending with? | I don't know |
+| further lending = Yes | Approximately how much was the further lending for? | I don't know |
+
+Rules, enforced in the browser **and** on the server:
+
+- **Branch not taken** — nothing may be supplied for it. A savings amount sent
+  alongside `savings: No` is contradictory and the submission is rejected. The
+  field is also forced empty, so nothing stale can reach the record.
+- **Branch taken** — exactly one of the value or its alternative must be
+  supplied, never both and never neither.
+- **Each further-lending answer is independent.** Knowing the lender but not the
+  amount is an ordinary answer; one gap never forces the others.
+- **One explanation covers every vulnerability category.** The client is never
+  asked to explain each one separately.
+- An alternative is a real answer: it is recorded as itself, never as a blank,
+  a zero or `Not provided`.
 
 ### Money handling
 
@@ -146,9 +188,7 @@ Input accepts `£`, thousands separators and spaces. Stored canonically
 - Admin fields collected by staff: **5** (FOS-only) / **7** (combined)
 - Time-Bar question blocks: **14**; Time-Bar accepted keys: **16** (combined only,
   the 14 answers plus `communicationEvent` and `communicationDate`)
-- FOS question blocks: **12**; FOS accepted keys: **19** (the two financial
-  groups carry four fields each, and the lending-date question carries the
-  date plus its “I don't know” checkbox)
+- FOS question blocks: **18**; FOS accepted keys: **31**
 - Common keys (matter details, token, confirmation, bot controls): **9**
-- **Total accepted keys: 28 (FOS-only) / 44 (combined).** Anything else is
+- **Total accepted keys: 40 (FOS-only) / 56 (combined).** Anything else is
   rejected as an unknown field.

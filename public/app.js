@@ -51,7 +51,38 @@
   ];
   const VULNERABILITY_NONE = 'None of these apply';
   const UNKNOWN_DATE_LABEL = "I don't know the exact date";
+  const UNKNOWN_LABEL = 'I don’t know';
+  const VULNERABILITY_DECLINE_LABEL = 'I don’t know / prefer not to add details';
   const MONEY_MESSAGE = 'Please enter an amount in pounds, for example 250 or 1250.50';
+
+  // A value control paired with the explicit alternative that replaces it.
+  // Ticking the alternative clears and disables the value; typing a value
+  // unticks the alternative. Enforced again on the server.
+  const EITHER_OR = [
+    ['fosLendingStart', 'fosLendingStartUnknown'],
+    ['fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined'],
+    ['fosSavingsAmount', 'fosSavingsAmountUnknown'],
+    ['fosDependantsCount', 'fosDependantsCountUnknown'],
+    ['fosFurtherLendingType', 'fosFurtherLendingTypeUnknown'],
+    ['fosFurtherLendingLender', 'fosFurtherLendingLenderUnknown'],
+    ['fosFurtherLendingAmount', 'fosFurtherLendingAmountUnknown']
+  ];
+
+  // A conditional block, the answer that opens it, and every field inside it.
+  // When the branch closes the fields are cleared, so an answer the client
+  // changed their mind about can never be submitted against a question they
+  // were no longer asked - which the server would reject as contradictory.
+  const BRANCHES = [
+    { block: '#fosVulnerabilityExplanationBlock', open: () => hasVulnerabilityCategory(),
+      fields: ['fosVulnerabilityExplanation'], flags: ['fosVulnerabilityExplanationDeclined'] },
+    { block: '#fosSavingsAmountBlock', open: () => selected('fosSavings') === 'Yes',
+      fields: ['fosSavingsAmount'], flags: ['fosSavingsAmountUnknown'] },
+    { block: '#fosDependantsCountBlock', open: () => selected('fosDependants') === 'Yes',
+      fields: ['fosDependantsCount'], flags: ['fosDependantsCountUnknown'] },
+    { block: '#fosFurtherLendingBlock', open: () => selected('fosFurtherLending') === 'Yes',
+      fields: ['fosFurtherLendingType', 'fosFurtherLendingLender', 'fosFurtherLendingAmount'],
+      flags: ['fosFurtherLendingTypeUnknown', 'fosFurtherLendingLenderUnknown', 'fosFurtherLendingAmountUnknown'] }
+  ];
 
   function showError(message) {
     globalError.textContent = message;
@@ -104,11 +135,18 @@
     q2Remember: 'tb2', q2RememberWhat: 'tb2', q2MadeThink: 'tb2', q2Explain: 'tb2', q2OtherMemory: 'tb2',
     q3Circumstances: 'tb3', q3Dates: 'tb3', q3Explain: 'tb3',
     fosVulnerabilities: 'fos1', fosVulnerabilityDetail: 'fos1',
+    fosVulnerabilityExplanation: 'fos1', fosVulnerabilityExplanationDeclined: 'fos1',
     fosCourtAction: 'fos2', fosLendingStart: 'fos2', fosLendingStartUnknown: 'fos2',
     fosLendingAmount: 'fos2', fosBalancesPaid: 'fos2',
     fosIncomeEmployment: 'fos3', fosIncomeBenefits: 'fos3', fosIncomeMaintenance: 'fos3', fosIncomePension: 'fos3',
-    fosSavings: 'fos3', fosOutHousing: 'fos3', fosOutUtilities: 'fos3', fosOutFood: 'fos3', fosOutTransport: 'fos3',
-    fosOtherExpenses: 'fos3', fosDependants: 'fos3', fosFurtherLending: 'fos3',
+    fosSavings: 'fos3', fosSavingsAmount: 'fos3', fosSavingsAmountUnknown: 'fos3',
+    fosOutHousing: 'fos3', fosOutUtilities: 'fos3', fosOutFood: 'fos3', fosOutTransport: 'fos3',
+    fosOtherExpenses: 'fos3',
+    fosDependants: 'fos3', fosDependantsCount: 'fos3', fosDependantsCountUnknown: 'fos3',
+    fosFurtherLending: 'fos3',
+    fosFurtherLendingType: 'fos3', fosFurtherLendingTypeUnknown: 'fos3',
+    fosFurtherLendingLender: 'fos3', fosFurtherLendingLenderUnknown: 'fos3',
+    fosFurtherLendingAmount: 'fos3', fosFurtherLendingAmountUnknown: 'fos3',
     confirmation: 'review'
   };
   const FRIENDLY = {
@@ -126,6 +164,7 @@
     const q2 = selected('q2Remember');
     if ($('#q2Yes')) { $('#q2Yes').hidden = q2 !== 'Yes'; $('#q2No').hidden = !(q2 === 'No' || q2 === 'Not sure'); }
     if ($('#q3Yes')) $('#q3Yes').hidden = selected('q3Circumstances') !== 'Yes';
+    updateBranches();
   }
 
   // "None of these apply" is mutually exclusive with every other option, in
@@ -140,15 +179,39 @@
     }
   }
 
-  // The exact date and "I don't know the exact date" are mutually exclusive, in
-  // both directions. Enforced again on the server.
-  function enforceLendingDateExclusivity(changed) {
-    const unknown = $('#fosLendingStartUnknown');
-    const date = $('#fosLendingStart');
-    if (!unknown || !date) return;
-    if (changed === unknown && unknown.checked) date.value = '';
-    if (changed === date && date.value) unknown.checked = false;
-    date.disabled = unknown.checked;
+  function hasVulnerabilityCategory() {
+    return checkedValues('fosVulnerabilities').some((v) => v !== VULNERABILITY_NONE);
+  }
+
+  // A value and its explicit alternative are mutually exclusive in both
+  // directions. Ticking the alternative clears and disables the value; typing a
+  // value unticks the alternative. Enforced again on the server.
+  function enforceEitherOr(changed) {
+    EITHER_OR.forEach(([valueId, unknownId]) => {
+      const valueEl = $('#' + valueId);
+      const unknownEl = $('#' + unknownId);
+      if (!valueEl || !unknownEl) return;
+      if (changed === unknownEl && unknownEl.checked) valueEl.value = '';
+      if (changed === valueEl && valueEl.value.trim()) unknownEl.checked = false;
+      valueEl.disabled = unknownEl.checked;
+    });
+  }
+
+  // Show or hide each conditional follow-up, and clear everything inside one
+  // that has just closed so a stale answer can never be submitted against a
+  // question the client is no longer being asked.
+  function updateBranches() {
+    BRANCHES.forEach((b) => {
+      const block = $(b.block);
+      if (!block) return;
+      const open = b.open();
+      if (block.hidden === !open) return;
+      block.hidden = !open;
+      if (!open) {
+        b.fields.forEach((f) => { const el = $('#' + f); if (el) { el.value = ''; el.disabled = false; } });
+        b.flags.forEach((f) => { const el = $('#' + f); if (el) el.checked = false; });
+      }
+    });
   }
 
   function loadPrefill(data) {
@@ -192,13 +255,15 @@
     gate.hidden = true; form.hidden = false; showStep(0);
   });
 
-  form.addEventListener('change', (e) => {
+  function onFormChange(e) {
     if (e.target && e.target.name === 'fosVulnerabilities') enforceVulnerabilityExclusivity(e.target);
-    if (e.target && (e.target.name === 'fosLendingStartUnknown' || e.target.name === 'fosLendingStart')) {
-      enforceLendingDateExclusivity(e.target);
-    }
+    enforceEitherOr(e.target);
     updateConditionals();
-  });
+  }
+  form.addEventListener('change', onFormChange);
+  // Typing into a value field must untick its alternative as it happens, not
+  // only once the field loses focus.
+  form.addEventListener('input', onFormChange);
   $$('.next').forEach((b) => b.addEventListener('click', () => {
     clearFieldErrors();
     if (!validateStep(currentStep())) return;
@@ -234,10 +299,22 @@
       need('q3Circumstances');
       if (selected('q3Circumstances') === 'Yes' && !value('#q3Explain')) { fieldError('q3Explain', 'Please answer this question.'); ok = false; }
     }
+    // One of a value control or its alternative, never both and never neither.
+    const eitherOr = (valueId, unknownId, label, missing) => {
+      const v = value('#' + valueId);
+      const unknown = $('#' + unknownId).checked;
+      if (v && unknown) { fieldError(valueId, `Please either answer this question or tick “${label}”, not both.`); ok = false; return false; }
+      if (!v && !unknown) { fieldError(valueId, missing); ok = false; return false; }
+      return true;
+    };
+
     if (step === 'fos1') {
       if (checkedValues('fosVulnerabilities').length === 0) {
         fieldError('fosVulnerabilities', 'Please select all that apply, or select “None of these apply”.');
         ok = false;
+      } else if (hasVulnerabilityCategory()) {
+        eitherOr('fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined', VULNERABILITY_DECLINE_LABEL,
+          `Please tell us briefly what applied to you, or tick “${VULNERABILITY_DECLINE_LABEL}”.`);
       }
     }
     if (step === 'fos2') {
@@ -264,9 +341,39 @@
         const v = value('#' + f);
         if (v && !moneyOk(v)) { fieldError(f, MONEY_MESSAGE); ok = false; }
       });
+
       need('fosSavings');
+      if (selected('fosSavings') === 'Yes'
+        && eitherOr('fosSavingsAmount', 'fosSavingsAmountUnknown', UNKNOWN_LABEL,
+          `Please enter roughly how much, or tick “${UNKNOWN_LABEL}”.`)
+        && value('#fosSavingsAmount') && !moneyOk(value('#fosSavingsAmount'))) {
+        fieldError('fosSavingsAmount', MONEY_MESSAGE); ok = false;
+      }
+
       need('fosDependants');
+      if (selected('fosDependants') === 'Yes'
+        && eitherOr('fosDependantsCount', 'fosDependantsCountUnknown', UNKNOWN_LABEL,
+          `Please enter how many, or tick “${UNKNOWN_LABEL}”.`)
+        && value('#fosDependantsCount')) {
+        const n = value('#fosDependantsCount');
+        // This follows a Yes, so zero would contradict the answer above it.
+        if (!/^\d{1,3}$/.test(n) || Number(n) < 1 || Number(n) > 50) {
+          fieldError('fosDependantsCount', 'Please enter a whole number of 1 or more.'); ok = false;
+        }
+      }
+
       need('fosFurtherLending');
+      if (selected('fosFurtherLending') === 'Yes') {
+        eitherOr('fosFurtherLendingType', 'fosFurtherLendingTypeUnknown', UNKNOWN_LABEL,
+          `Please tell us the type of lending, or tick “${UNKNOWN_LABEL}”.`);
+        eitherOr('fosFurtherLendingLender', 'fosFurtherLendingLenderUnknown', UNKNOWN_LABEL,
+          `Please tell us who the lending was with, or tick “${UNKNOWN_LABEL}”.`);
+        if (eitherOr('fosFurtherLendingAmount', 'fosFurtherLendingAmountUnknown', UNKNOWN_LABEL,
+          `Please enter roughly how much, or tick “${UNKNOWN_LABEL}”.`)
+          && value('#fosFurtherLendingAmount') && !moneyOk(value('#fosFurtherLendingAmount'))) {
+          fieldError('fosFurtherLendingAmount', MONEY_MESSAGE); ok = false;
+        }
+      }
     }
     if (!ok) showError('Please complete the highlighted question before continuing.'); else clearError();
     return ok;
@@ -279,6 +386,8 @@
       clientName: p.clientName, reference: p.reference, lender: p.lender, product: p.product,
       prefillToken: state.prefillToken,
       fosVulnerabilities: checkedValues('fosVulnerabilities'),
+      fosVulnerabilityExplanation: value('#fosVulnerabilityExplanation'),
+      fosVulnerabilityExplanationDeclined: $('#fosVulnerabilityExplanationDeclined').checked,
       fosVulnerabilityDetail: value('#fosVulnerabilityDetail'),
       fosCourtAction: selected('fosCourtAction'),
       // When the client says they do not know the date, no date is sent: there
@@ -288,9 +397,19 @@
       fosLendingAmount: value('#fosLendingAmount'),
       fosBalancesPaid: selected('fosBalancesPaid'),
       fosSavings: selected('fosSavings'),
+      fosSavingsAmount: value('#fosSavingsAmount'),
+      fosSavingsAmountUnknown: $('#fosSavingsAmountUnknown').checked,
       fosOtherExpenses: value('#fosOtherExpenses'),
       fosDependants: selected('fosDependants'),
+      fosDependantsCount: value('#fosDependantsCount'),
+      fosDependantsCountUnknown: $('#fosDependantsCountUnknown').checked,
       fosFurtherLending: selected('fosFurtherLending'),
+      fosFurtherLendingType: value('#fosFurtherLendingType'),
+      fosFurtherLendingTypeUnknown: $('#fosFurtherLendingTypeUnknown').checked,
+      fosFurtherLendingLender: value('#fosFurtherLendingLender'),
+      fosFurtherLendingLenderUnknown: $('#fosFurtherLendingLenderUnknown').checked,
+      fosFurtherLendingAmount: value('#fosFurtherLendingAmount'),
+      fosFurtherLendingAmountUnknown: $('#fosFurtherLendingAmountUnknown').checked,
       confirmation: $('#confirmation').checked,
       website: value('#website'),
       startedAt: state.startedAt
@@ -342,7 +461,14 @@
       rows.push(['Serious circumstances affected understanding or ability to act?', d.q3Circumstances]);
       if (d.q3Circumstances === 'Yes') rows.push(['Approximate dates', displayText(d.q3Dates)], ['Explanation', d.q3Explain]);
     }
-    rows.push(['Do any of the following apply?', d.fosVulnerabilities.length ? d.fosVulnerabilities.join('\n') : NOT_PROVIDED]);
+    // Each selected category is kept as its own line rather than merged into a
+    // single string, so no category can be lost from the record.
+    rows.push(['Do any of the following apply?',
+      d.fosVulnerabilities.length ? d.fosVulnerabilities.slice() : NOT_PROVIDED]);
+    if (d.fosVulnerabilities.some((v) => v !== VULNERABILITY_NONE)) {
+      rows.push(['Please briefly tell us what applied to you.',
+        d.fosVulnerabilityExplanationDeclined ? VULNERABILITY_DECLINE_LABEL : displayText(d.fosVulnerabilityExplanation)]);
+    }
     rows.push(['If there’s anything else you’d like to tell us about this, you can do so here', displayText(d.fosVulnerabilityDetail)]);
     rows.push(['Has there been any court action related to the complaint (or is any planned)?', d.fosCourtAction]);
     rows.push(['When did the lending start?', d.fosLendingStartUnknown ? UNKNOWN_DATE_LABEL : displayDate(d.fosLendingStart)]);
@@ -350,18 +476,43 @@
     rows.push(['Have any outstanding balances been paid?', d.fosBalancesPaid]);
     INCOME_ROWS.forEach(([label, f]) => rows.push([`Income — ${label}`, displayMoney(d[f])]));
     rows.push(['Did you have any savings at the time of the initial lending?', d.fosSavings]);
+    if (d.fosSavings === 'Yes') {
+      rows.push(['Approximately how much did you have in savings?',
+        d.fosSavingsAmountUnknown ? UNKNOWN_LABEL : displayMoney(d.fosSavingsAmount)]);
+    }
     OUTGOING_ROWS.forEach(([label, f]) => rows.push([`Essential outgoings — ${label}`, displayMoney(d[f])]));
     rows.push(['Please provide details of any other regular expenses you had at that time (optional)', displayText(d.fosOtherExpenses)]);
     rows.push(['Did you have any dependants at the time?', d.fosDependants]);
+    if (d.fosDependants === 'Yes') {
+      rows.push(['How many dependants did you have?',
+        d.fosDependantsCountUnknown ? UNKNOWN_LABEL : displayText(d.fosDependantsCount)]);
+    }
     rows.push(['Did you apply for any further lending?', d.fosFurtherLending]);
+    if (d.fosFurtherLending === 'Yes') {
+      rows.push(['What type of further lending did you apply for?',
+        d.fosFurtherLendingTypeUnknown ? UNKNOWN_LABEL : displayText(d.fosFurtherLendingType)]);
+      rows.push(['Who was the further lending with?',
+        d.fosFurtherLendingLenderUnknown ? UNKNOWN_LABEL : displayText(d.fosFurtherLendingLender)]);
+      rows.push(['Approximately how much was the further lending for?',
+        d.fosFurtherLendingAmountUnknown ? UNKNOWN_LABEL : displayMoney(d.fosFurtherLendingAmount)]);
+    }
 
     const review = $('#review');
     review.textContent = '';
     rows.forEach(([k, v]) => {
       const wrap = document.createElement('div'); wrap.className = 'summary-item';
       const strong = document.createElement('strong'); strong.textContent = k;
-      const span = document.createElement('span'); span.textContent = v || NOT_PROVIDED;
-      wrap.append(strong, span); review.appendChild(wrap);
+      wrap.append(strong);
+      if (Array.isArray(v)) {
+        // A multi-select answer is shown as a real list, one item per line.
+        const ul = document.createElement('ul'); ul.className = 'summary-list';
+        v.forEach((item) => { const li = document.createElement('li'); li.textContent = item; ul.appendChild(li); });
+        wrap.append(ul);
+      } else {
+        const span = document.createElement('span'); span.textContent = v || NOT_PROVIDED;
+        wrap.append(span);
+      }
+      review.appendChild(wrap);
     });
   }
 

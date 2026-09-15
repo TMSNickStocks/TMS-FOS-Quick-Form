@@ -13,7 +13,8 @@
 | `logging.test.js` | 5 | no `console.*` in `api/` or `lib/` references client data or credentials; submit logs only id, message id, mode, outcome, duration; `lib/mail.js` never logs |
 | `prefill.test.js` | 5 | encryption round trip; tampered token rejected; TTL fallback; finite expiry |
 | `rate-limit.test.js` | 1 | window behaviour |
-| **Total** | **179** | |
+| `followups.test.js` | 39 | the follow-ups approved 2026-09-15: multiple vulnerability categories preserved individually; explanation and decline paths; None-of-these exclusivity; savings Yes+amount / Yes+unknown / No; dependants Yes+count / Yes+unknown / No and the 1-or-more rule; further lending with all three answers, mixed known/unknown, and No; review wiring; record output; full question before every answer; **every contradictory payload rejected server-side**; no follow-up answer in logs; both modes |
+| **Total** | **218** | |
 
 ## Static checks (`npm run lint`)
 
@@ -47,3 +48,9 @@ Syntax check: 23 files. Credential scan: passed. Typecheck: passed.
 | Submission | both modes returned the success screen |
 | Server log | `requestId`, `messageId`, `mode`, `delivery`, `durationMs` only |
 | 320 / 390 / 430 px | no horizontal scroll at any width |
+| Vulnerability branch | explanation block opens on any category, closes on "None of these apply" |
+| Explanation exclusivity | typing cleared the decline tick; ticking decline cleared and disabled the text |
+| Follow-up branches | savings / dependants / further lending blocks opened on Yes, each blocking independently until answered |
+| Mixed known/unknown | type and lender entered, amount marked not known - accepted |
+| Review screen | 28 rows, both selected categories as separate list items, every follow-up shown |
+| Submission | accepted end to end; log carried only id, message id, mode, outcome, duration |

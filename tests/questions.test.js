@@ -13,7 +13,8 @@ const {
 const { TIMEBAR_QUESTIONS } = require('../lib/questions-timebar');
 const {
   FOS_QUESTIONS, VULNERABILITY_OPTIONS, VULNERABILITY_VALUES, VULNERABILITY_NONE,
-  EXAMPLES_INTRO, EXAMPLES_TOGGLE, UNKNOWN_DATE_LABEL, INCOME_ROWS, OUTGOING_ROWS,
+  EXAMPLES_INTRO, EXAMPLES_TOGGLE, UNKNOWN_DATE_LABEL, UNKNOWN_LABEL,
+  VULNERABILITY_DECLINE_LABEL, INCOME_ROWS, OUTGOING_ROWS,
   INCOME_GROUP_LABEL, INCOME_AMOUNT_LABEL, OUTGOING_GROUP_LABEL, OUTGOING_AMOUNT_LABEL
 } = require('../lib/questions-fos');
 
@@ -66,17 +67,34 @@ test('the financial group labels and every row label appear verbatim', () => {
   }
 });
 
-test('the only "I don\'t know" answer is the one TMS approved for the lending date', () => {
-  // Checked against the FOS steps only: "Not sure" is approved Time-Bar wording.
-  const fosMarkup = html.slice(html.indexOf('data-step="fos1"'), html.indexOf('data-step="review"'));
-  const occurrences = (fosMarkup.match(/don.t know/gi) || []).length;
-  assert.equal(occurrences, 1, 'exactly one "don\'t know" answer may exist in the FOS questions');
-  assert.ok(fosMarkup.includes(UNKNOWN_DATE_LABEL), 'and it must carry the approved wording exactly');
+test('every "I don\'t know" answer is one TMS approved, and no other exists', () => {
+  // The approved set, and nothing else. A new alternative cannot be slipped in
+  // without failing here, and none can quietly change its wording.
+  const APPROVED = [
+    ['FOS_VULNERABILITY_EXPLANATION', VULNERABILITY_DECLINE_LABEL],
+    ['FOS_LENDING_START', UNKNOWN_DATE_LABEL],
+    ['FOS_SAVINGS_AMOUNT', UNKNOWN_LABEL],
+    ['FOS_DEPENDANTS_COUNT', UNKNOWN_LABEL],
+    ['FOS_FURTHER_LENDING_TYPE', UNKNOWN_LABEL],
+    ['FOS_FURTHER_LENDING_LENDER', UNKNOWN_LABEL],
+    ['FOS_FURTHER_LENDING_AMOUNT', UNKNOWN_LABEL]
+  ];
   assert.equal(UNKNOWN_DATE_LABEL, "I don't know the exact date");
-  // It belongs to the lending start date question and nothing else.
-  const block = FOS_QUESTIONS.find((q) => q.unknownField);
-  assert.equal(block.id, 'FOS_LENDING_START');
-  assert.equal(FOS_QUESTIONS.filter((q) => q.unknownField).length, 1);
+  assert.equal(UNKNOWN_LABEL, 'I don’t know');
+  assert.equal(VULNERABILITY_DECLINE_LABEL, 'I don’t know / prefer not to add details');
+
+  const withAlternative = FOS_QUESTIONS.filter((q) => q.unknownField);
+  assert.deepEqual(withAlternative.map((q) => [q.id, q.unknownLabel]), APPROVED);
+
+  // Each alternative is rendered exactly once, and nothing else in the FOS
+  // questions offers a "don't know" style answer. Counted over the markup with
+  // comments stripped, so this measures what a client is actually shown.
+  const fosMarkup = html
+    .slice(html.indexOf('data-step="fos1"'), html.indexOf('data-step="review"'))
+    .replace(/<!--[\s\S]*?-->/g, '');
+  const occurrences = (fosMarkup.match(/don.t know/gi) || []).length;
+  assert.equal(occurrences, APPROVED.length, 'one rendered alternative per approved question, and no more');
+  for (const [, label] of APPROVED) assert.ok(inForm(label), `alternative missing from the form: ${label}`);
 });
 
 test('no other unapproved answer option was added to the FOS questions', () => {

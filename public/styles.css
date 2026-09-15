@@ -190,3 +190,7 @@ details.examples > summary:focus-visible { outline: 3px solid var(--focus); outl
 /* An alternative answer offered beside an input, e.g. "I don't know the exact
    date" next to the date control. Spaced away so it never reads as a caption. */
 .or-option { margin-top: 12px; }
+
+/* A multi-select answer on the review screen: one selected option per line. */
+.summary-list { margin: 3px 0 0; padding-left: 20px; }
+.summary-list li { margin: 0 0 3px; overflow-wrap: anywhere; }

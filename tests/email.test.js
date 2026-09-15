@@ -13,6 +13,7 @@ const FOS_BASE = {
   mode: MODE_FOS_ONLY,
   clientName: 'Test Person', reference: '200000001', lender: 'Test Lender', product: 'Credit card',
   fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[2]],
+  fosVulnerabilityExplanation: 'Synthetic combined explanation.',
   fosVulnerabilityDetail: 'Synthetic extra detail.',
   fosCourtAction: 'No',
   fosLendingStart: '2015-06-01',
@@ -22,7 +23,7 @@ const FOS_BASE = {
   fosSavings: 'No',
   fosOutHousing: '600', fosOutUtilities: '150.50', fosOutFood: '250', fosOutTransport: '',
   fosOtherExpenses: '',
-  fosDependants: 'Yes',
+  fosDependants: 'Yes', fosDependantsCount: '2',
   fosFurtherLending: 'No'
 };
 const TIMEBAR_BASE = {
@@ -86,6 +87,11 @@ function parse(text) {
   return { blocks, fields, sections, byId: Object.fromEntries(blocks.map((b) => [b.id, b])) };
 }
 const idsOf = (text) => parse(text).blocks.map((b) => b.id);
+
+// Several FOS blocks are conditional follow-ups, so "every question" means
+// every question this particular client was actually asked.
+const FOS_DATA = FOS_BASE;
+const appliedFos = (data = FOS_DATA) => FOS_QUESTIONS.filter((q) => q.applies(data));
 
 // ---------------------------------------------------------------- envelope
 
@@ -190,7 +196,7 @@ test('adminFields drives the record, so the two can never disagree', () => {
 
 test('every FOS answer is preceded by the full approved question', () => {
   const { byId } = parse(fosOnly().text);
-  for (const q of FOS_QUESTIONS) {
+  for (const q of appliedFos()) {
     const b = byId[q.id];
     assert.ok(b, `${q.id} missing from the record`);
     assert.equal(b.question.join('\n'), q.question, `${q.id} must reproduce its question verbatim`);
@@ -213,7 +219,7 @@ test('every Time-Bar answer is preceded by the full approved question', () => {
 
 test('the HTML record also shows every question next to its answer', () => {
   const html = fosOnly().html;
-  for (const q of FOS_QUESTIONS) {
+  for (const q of appliedFos()) {
     assert.ok(html.includes(esc(q.question)), `${q.id} question missing from HTML`);
     assert.ok(html.indexOf(esc(q.question)) < html.indexOf('CLIENT ANSWER', html.indexOf(esc(q.question))));
   }
@@ -224,7 +230,7 @@ test('the record is not a field dump: no answer appears without a question marke
   const answers = (text.match(/^CLIENT ANSWER:$/gm) || []).length;
   const questions = (text.match(/^QUESTION:$/gm) || []).length;
   assert.equal(answers, questions, 'exactly one question marker per answer marker');
-  assert.equal(answers, FOS_QUESTIONS.length);
+  assert.equal(answers, appliedFos().length);
 });
 
 // ------------------------------------------------------ vulnerability output
@@ -386,7 +392,7 @@ test('free text cannot forge a block id, a marker or a section heading', () => {
   const { text } = fosOnly({ fosOtherExpenses: attack });
   const parsed = parse(text);
 
-  assert.equal(parsed.blocks.length, FOS_QUESTIONS.length + 1, 'the attack created no extra block');
+  assert.equal(parsed.blocks.length, appliedFos({ ...FOS_DATA, fosOtherExpenses: attack }).length + 1, 'the attack created no extra block');
   assert.equal(parsed.fields.Format, 'TMS-FOS-V1', 'the format marker was not overwritten');
   assert.equal(parsed.fields['Questionnaire mode'], 'FOS_ONLY', 'the mode marker was not overwritten');
   assert.deepEqual(parsed.sections, [SECTION_ADMIN, SECTION_FOS, SECTION_CONFIRMATION], 'no section was forged');
@@ -426,10 +432,10 @@ test('an email header can never be forged from a client answer', () => {
 // ------------------------------------------------------------- block ids
 
 test('block ids are stable and machine-readable in both modes', () => {
-  assert.deepEqual(idsOf(fosOnly().text), FOS_QUESTIONS.map((q) => q.id).concat(['CONFIRMATION']));
+  assert.deepEqual(idsOf(fosOnly().text), appliedFos().map((q) => q.id).concat(['CONFIRMATION']));
   const data = { ...FOS_BASE, mode: MODE_TIMEBAR_AND_FOS, ...TIMEBAR_BASE };
   const expected = TIMEBAR_QUESTIONS.filter((q) => q.applies(data)).map((q) => q.id)
-    .concat(FOS_QUESTIONS.map((q) => q.id))
+    .concat(appliedFos(data).map((q) => q.id))
     .concat(['CONFIRMATION']);
   assert.deepEqual(idsOf(combined().text), expected);
 });
