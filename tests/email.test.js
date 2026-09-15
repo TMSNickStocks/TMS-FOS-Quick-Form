@@ -453,7 +453,7 @@ test('a missing submission id is recorded as not provided rather than blank', ()
   assert.match(text, new RegExp(`^Submission ID: ${NOT_PROVIDED}$`, 'm'));
 });
 
-// -------------------------------- lending date: exact vs "I don't know"
+// -------------------------------- lending date: exact vs "I don't remember"
 
 const { UNKNOWN_DATE_LABEL } = require('../lib/questions-fos');
 
@@ -485,7 +485,7 @@ test('no date is generated or inferred when the client does not know it', () => 
 
 test('a stray date is ignored if the client said they do not know it', () => {
   // Defence in depth: the validator forces the date empty, but the record must
-  // prefer the "I don't know" answer even if a date somehow reaches it.
+  // prefer the "I don't remember" answer even if a date somehow reaches it.
   const b = parse(fosOnly({ fosLendingStart: '2016-04-18', fosLendingStartUnknown: true }).text).byId.FOS_LENDING_START;
   assert.equal(b.answer.join('\n'), UNKNOWN_DATE_LABEL);
   assert.ok(!b.answer.join('\n').includes('18/04/2016'));

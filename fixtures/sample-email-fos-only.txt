@@ -146,7 +146,7 @@ CLIENT ANSWER:
 QUESTION:
   Approximately how much was the further lending for?
 CLIENT ANSWER:
-  I don’t know
+  I don't remember
 
 CONFIRMATION
 

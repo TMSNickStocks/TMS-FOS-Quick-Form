@@ -34,7 +34,7 @@ marker is source wording and must not be edited.
 1. **Presentation headings** for sections 1 and 6 (see "Source ambiguities"
    below). Headings only — no question, option, example or evidence wording was
    touched.
-2. **One added answer:** `I don't know the exact date`, offered against the
+2. **One added answer:** `I don't remember the exact date`, offered against the
    otherwise unchanged question `When did the lending start?`.
 3. **Six conditional follow-ups** (approved 2026-09-15), each shown only when
    the answer above it opens it, and each offering an explicit alternative to
@@ -92,7 +92,7 @@ TMS on 2026-09-15; the rest are recorded for provenance.
    - **Optional:** every income and outgoings amount, and all three free-text
      boxes.
    - The lending start date was originally a dead end for a client who could not
-     recall it. **Resolved: TMS approved an "I don't know the exact date"
+     recall it. **Resolved: TMS approved an "I don't remember the exact date"
      alternative** for that question only. The approved question is unchanged;
      the two answers are mutually exclusive; and choosing the alternative never
      generates or infers a date.

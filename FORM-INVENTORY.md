@@ -76,7 +76,7 @@ form. Omitted entirely in `FOS_ONLY`.
 | `FOS_VULNERABILITY_DETAIL` | `fosVulnerabilityDetail` | textarea | no | 1400 |
 | `FOS_COURT_ACTION` | `fosCourtAction` | radio Yes/No | yes | — |
 | `FOS_LENDING_START` | `fosLendingStart` | date | yes, unless the client does not know it | real past date, ≥ 1900, not future |
-| `FOS_LENDING_START` | `fosLendingStartUnknown` | checkbox “I don't know the exact date” | no | boolean; mutually exclusive with the date |
+| `FOS_LENDING_START` | `fosLendingStartUnknown` | checkbox “I don't remember the exact date” | no | boolean; mutually exclusive with the date |
 | `FOS_LENDING_AMOUNT` | `fosLendingAmount` | text, decimal keypad | yes | pounds, ≤ 2 dp |
 | `FOS_BALANCES_PAID` | `fosBalancesPaid` | radio Yes/No | yes | — |
 | `FOS_INCOME` | `fosIncomeEmployment` | text, decimal keypad | no | pounds |
@@ -121,16 +121,16 @@ optional "anything else" box stays optional and is never made mandatory.
 
 Approved 2026-09-15: a client is never forced to invent a date. The approved
 question is unchanged and the client answers it either with an exact date or by
-ticking **I don't know the exact date**.
+ticking **I don't remember the exact date**.
 
 - The two are mutually exclusive, enforced in the browser **and** on the server.
 - Ticking the checkbox clears and disables the date field; entering a date
   unticks the checkbox.
 - When the checkbox is ticked the date is **not** required, and no date is
   generated or inferred — the stored value is forced empty.
-- The review page shows `I don't know the exact date`.
+- The review page shows `I don't remember the exact date`.
 - The record reproduces the full question and records
-  `CLIENT ANSWER: I don't know the exact date`.
+  `CLIENT ANSWER: I don't remember the exact date`.
 
 ### Conditional follow-ups (approved 2026-09-15)
 
@@ -140,12 +140,12 @@ happened. These follow-ups capture the substance.
 
 | Opened by | Follow-up | Alternative |
 |---|---|---|
-| any vulnerability category selected | Please briefly tell us what applied to you. | I don't know / prefer not to add details |
-| savings = Yes | Approximately how much did you have in savings? | I don't know |
-| dependants = Yes | How many dependants did you have? | I don't know |
-| further lending = Yes | What type of further lending did you apply for? | I don't know |
-| further lending = Yes | Who was the further lending with? | I don't know |
-| further lending = Yes | Approximately how much was the further lending for? | I don't know |
+| any vulnerability category selected | Please briefly tell us what applied to you. | I don't remember / prefer not to add details |
+| savings = Yes | Approximately how much did you have in savings? | I don't remember |
+| dependants = Yes | How many dependants did you have? | I don't remember |
+| further lending = Yes | What type of further lending did you apply for? | I don't remember |
+| further lending = Yes | Who was the further lending with? | I don't remember |
+| further lending = Yes | Approximately how much was the further lending for? | I don't remember |
 
 Rules, enforced in the browser **and** on the server:
 

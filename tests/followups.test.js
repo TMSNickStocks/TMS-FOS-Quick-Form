@@ -10,7 +10,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 const { validateSubmission, MODE_FOS_ONLY, MODE_TIMEBAR_AND_FOS } = require('../lib/validation');
-const { buildEmail, NOT_PROVIDED } = require('../lib/email-template');
+const { buildEmail, esc, NOT_PROVIDED } = require('../lib/email-template');
 const {
   FOS_QUESTIONS, VULNERABILITY_VALUES, VULNERABILITY_NONE,
   UNKNOWN_LABEL, VULNERABILITY_DECLINE_LABEL
@@ -114,7 +114,10 @@ test('3. the decline alternative is accepted and recorded as itself', () => {
   const { text, html: htmlPart } = record({ fosVulnerabilities: [CAT[0], CAT[1]], fosVulnerabilityExplanationDeclined: true });
   assert.equal(answerOf(text, 'FOS_VULNERABILITY_EXPLANATION'), VULNERABILITY_DECLINE_LABEL);
   assert.ok(!answerOf(text, 'FOS_VULNERABILITY_EXPLANATION').includes(NOT_PROVIDED), 'never recorded as a blank');
-  assert.ok(htmlPart.includes(VULNERABILITY_DECLINE_LABEL));
+  // The label carries an apostrophe, so the HTML part escapes it. Compare the
+  // escaped form rather than asserting the raw string is present unescaped.
+  assert.ok(htmlPart.includes(esc(VULNERABILITY_DECLINE_LABEL)));
+  assert.ok(!htmlPart.includes(VULNERABILITY_DECLINE_LABEL), 'the raw apostrophe never reaches the HTML unescaped');
 });
 
 test('3b. text and the decline alternative are mutually exclusive', () => {

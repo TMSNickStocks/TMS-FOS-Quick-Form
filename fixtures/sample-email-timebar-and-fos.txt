@@ -105,7 +105,7 @@ CLIENT ANSWER:
 QUESTION:
   Please briefly tell us what applied to you.
 CLIENT ANSWER:
-  I don’t know / prefer not to add details
+  I don't remember / prefer not to add details
 
 [FOS_VULNERABILITY_DETAIL]
 QUESTION:
@@ -127,7 +127,7 @@ QUESTION:
 NOTE:
   For example 01/01/2025
 CLIENT ANSWER:
-  I don't know the exact date
+  I don't remember the exact date
 
 [FOS_LENDING_AMOUNT] 4. How much was the lending initially for?
 QUESTION:
@@ -162,7 +162,7 @@ CLIENT ANSWER:
 QUESTION:
   Approximately how much did you have in savings?
 CLIENT ANSWER:
-  I don’t know
+  I don't remember
 
 [FOS_OUTGOINGS]
 QUESTION:
@@ -189,7 +189,7 @@ CLIENT ANSWER:
 QUESTION:
   How many dependants did you have?
 CLIENT ANSWER:
-  I don’t know
+  I don't remember
 
 [FOS_FURTHER_LENDING]
 QUESTION:
@@ -213,7 +213,7 @@ CLIENT ANSWER:
 QUESTION:
   Approximately how much was the further lending for?
 CLIENT ANSWER:
-  I don’t know
+  I don't remember
 
 CONFIRMATION
 

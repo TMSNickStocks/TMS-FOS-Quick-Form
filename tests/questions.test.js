@@ -79,20 +79,20 @@ test('every "I don\'t know" answer is one TMS approved, and no other exists', ()
     ['FOS_FURTHER_LENDING_LENDER', UNKNOWN_LABEL],
     ['FOS_FURTHER_LENDING_AMOUNT', UNKNOWN_LABEL]
   ];
-  assert.equal(UNKNOWN_DATE_LABEL, "I don't know the exact date");
-  assert.equal(UNKNOWN_LABEL, 'I don’t know');
-  assert.equal(VULNERABILITY_DECLINE_LABEL, 'I don’t know / prefer not to add details');
+  assert.equal(UNKNOWN_DATE_LABEL, "I don't remember the exact date");
+  assert.equal(UNKNOWN_LABEL, "I don't remember");
+  assert.equal(VULNERABILITY_DECLINE_LABEL, "I don't remember / prefer not to add details");
 
   const withAlternative = FOS_QUESTIONS.filter((q) => q.unknownField);
   assert.deepEqual(withAlternative.map((q) => [q.id, q.unknownLabel]), APPROVED);
 
   // Each alternative is rendered exactly once, and nothing else in the FOS
-  // questions offers a "don't know" style answer. Counted over the markup with
+  // questions offers a "don't remember" style answer. Counted over the markup with
   // comments stripped, so this measures what a client is actually shown.
   const fosMarkup = html
     .slice(html.indexOf('data-step="fos1"'), html.indexOf('data-step="review"'))
     .replace(/<!--[\s\S]*?-->/g, '');
-  const occurrences = (fosMarkup.match(/don.t know/gi) || []).length;
+  const occurrences = (fosMarkup.match(/don.t remember/gi) || []).length;
   assert.equal(occurrences, APPROVED.length, 'one rendered alternative per approved question, and no more');
   for (const [, label] of APPROVED) assert.ok(inForm(label), `alternative missing from the form: ${label}`);
 });

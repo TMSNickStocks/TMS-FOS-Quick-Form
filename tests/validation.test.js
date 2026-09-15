@@ -300,16 +300,16 @@ test('the Time-Bar field names are unchanged, so the record stays comparable', (
   ]);
 });
 
-// ------------------------------------ lending start date / "I don't know"
+// ------------------------------------ lending start date / "I don't remember"
 //
 // Approved 2026-09-15: a client must not be forced to invent an exact date.
-// The two answers are mutually exclusive, and choosing "I don't know" must
+// The two answers are mutually exclusive, and choosing "I don't remember" must
 // never cause a date to be generated or inferred.
 
 const { UNKNOWN_DATE_LABEL } = require('../lib/questions-fos');
 
 test('the approved label is exactly the wording TMS specified', () => {
-  assert.equal(UNKNOWN_DATE_LABEL, "I don't know the exact date");
+  assert.equal(UNKNOWN_DATE_LABEL, "I don't remember the exact date");
 });
 
 test('an exact date is still accepted and recorded', () => {

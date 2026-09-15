@@ -172,18 +172,18 @@ answering. Choosing one is a real answer and is recorded as itself:
 QUESTION:
   Approximately how much did you have in savings?
 CLIENT ANSWER:
-  I don't know
+  I don't remember
 ```
 
 Never as `Not provided`, never as a blank, and never as a fabricated `£0` or
-`0`. The approved wording is `I don't know` for every follow-up except the
+`0`. The approved wording is `I don't remember` for every follow-up except the
 vulnerability explanation, which uses
-`I don't know / prefer not to add details`, and the lending start date, which
-uses `I don't know the exact date`.
+`I don't remember / prefer not to add details`, and the lending start date, which
+uses `I don't remember the exact date`.
 
 The three further-lending answers are independent. A client who remembers the
 lender but not the amount produces a record naming the lender and recording
-`I don't know` for the amount only.
+`I don't remember` for the amount only.
 
 ## Financial output
 
@@ -205,7 +205,7 @@ row is `Not provided`, never `0`.
 The lending start date follows the same pattern in the source's own DD/MM/YYYY
 form: `18/04/2016 [value: 2016-04-18]`.
 
-If the client answered the same question by ticking **I don't know the exact
+If the client answered the same question by ticking **I don't remember the exact
 date**, the block still reproduces the full approved question and its note, and
 the answer is simply:
 
@@ -216,7 +216,7 @@ QUESTION:
 NOTE:
   For example 01/01/2025
 CLIENT ANSWER:
-  I don't know the exact date
+  I don't remember the exact date
 ```
 
 No date is generated or inferred, no `[value: …]` is emitted, and it is not

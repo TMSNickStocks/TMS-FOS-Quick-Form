@@ -50,9 +50,9 @@
     ['Fuel or transport costs', 'fosOutTransport']
   ];
   const VULNERABILITY_NONE = 'None of these apply';
-  const UNKNOWN_DATE_LABEL = "I don't know the exact date";
-  const UNKNOWN_LABEL = 'I don’t know';
-  const VULNERABILITY_DECLINE_LABEL = 'I don’t know / prefer not to add details';
+  const UNKNOWN_DATE_LABEL = "I don't remember the exact date";
+  const UNKNOWN_LABEL = "I don't remember";
+  const VULNERABILITY_DECLINE_LABEL = "I don't remember / prefer not to add details";
   const MONEY_MESSAGE = 'Please enter an amount in pounds, for example 250 or 1250.50';
 
   // A value control paired with the explicit alternative that replaces it.

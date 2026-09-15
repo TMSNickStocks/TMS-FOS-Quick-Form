@@ -47,7 +47,7 @@ const TIMEBAR = {
 
 const out = [
   ['fos-only', { ...FOS, mode: 'FOS_ONLY' }],
-  // The combined example also exercises the approved "I don't know the exact
+  // The combined example also exercises the approved "I don't remember the exact
   // date" answer, so both lending-date paths appear in the worked examples.
   // The combined sample exercises the other side of each alternative: the
   // lending date, the savings amount and the dependants count are all unknown.
