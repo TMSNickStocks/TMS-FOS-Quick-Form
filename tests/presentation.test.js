@@ -1,6 +1,7 @@
 // Presentation rules approved 2026-09-15:
 //
-//   - the introduction is shown on the opening page only, not above every step;
+//   - the introduction is shown on the first step only: not on the landing
+//     page, which asks for the reference alone, and not above every step;
 //   - the review screen and the evidence record show each selected circumstance
 //     once, through its own block, rather than also listing them in aggregate.
 //
@@ -52,12 +53,12 @@ const INTRO_CONTENT = [
   'Submitting this questionnaire provides information to TMS Legal. It does not itself refer your complaint to the Financial Ombudsman Service or extend any applicable deadline.'
 ];
 
-// ===================== 1. introduction: opening page only ==================
+// ===================== 1. introduction: first step only ====================
 
 test('the introduction is all inside one block, so it moves as a unit', () => {
-  const start = html.indexOf('<section id="intro">');
+  const start = html.indexOf('<section id="intro" hidden>');
   const end = html.indexOf('</section>', start);
-  assert.ok(start > -1 && end > start, 'the intro block exists');
+  assert.ok(start > -1 && end > start, 'the intro block exists and starts hidden');
   const intro = html.slice(start, end);
   for (const line of INTRO_CONTENT) {
     assert.ok(intro.replace(/\s+/g, ' ').includes(line), `intro content missing: ${line.slice(0, 50)}`);
@@ -106,11 +107,11 @@ test('both modes get their own introduction on their own first step', () => {
   assert.ok(intro.includes('TIMEBAR_AND_FOS:'), 'combined opening exists');
 });
 
-test('the opening page still carries the disclaimer and the privacy link', () => {
-  const start = html.indexOf('<section id="intro">');
+test('the first step carries the disclaimer and the privacy link', () => {
+  const start = html.indexOf('<section id="intro" hidden>');
   const intro = html.slice(start, html.indexOf('</section>', start));
   assert.ok(intro.includes('It does not itself refer your complaint to the Financial Ombudsman Service'),
-    'the disclaimer is on the opening page');
+    'the disclaimer travels with the introduction');
   assert.match(intro, /class="privacy-link"[^>]*href="https:\/\/pba-claims\.co\.uk\/website-privacy-policy\.php"/);
 });
 
@@ -258,5 +259,28 @@ test('hiding the introduction removes height, it does not collapse the layout', 
   // [hidden] is display:none, so the block takes no space when hidden and the
   // step below it moves up rather than being overlapped.
   assert.match(css, /\[hidden\] \{ display: none !important; \}/);
-  assert.ok(html.includes('<section id="intro">'), 'the intro is its own section, so hiding it is total');
+  assert.ok(html.includes('<section id="intro" hidden>'), 'the intro is its own section, so hiding it is total');
+});
+
+test('the landing page does not carry the introduction', () => {
+  // It starts hidden in the markup, so the reference page shows only the
+  // reference request. showStep reveals it when the first step opens.
+  assert.match(html, /<section id="intro" hidden>/, 'hidden in the markup, so the landing page is clean');
+  // Nothing reveals it before the first step is shown.
+  const beforeStart = app.slice(0, app.indexOf("$('#startBtn')"));
+  assert.ok(!beforeStart.includes("$('#intro').hidden = false"), 'nothing reveals it early');
+  // showStep is the only thing that sets it, and only step 0 makes it visible.
+  assert.ok(app.includes("$('#intro').hidden = state.index > 0;"));
+  assert.equal((app.match(/#intro.\)\.hidden =/g) || []).length, 3,
+    'set in exactly three places: showStep, and hidden on success and failure');
+});
+
+test('the introduction is shown exactly once in a run', () => {
+  // Hidden in the markup, revealed on step 0, hidden again for every step
+  // after - so a client sees it on one screen only.
+  const showStep = app.slice(app.indexOf('function showStep'), app.indexOf('function selected'));
+  assert.ok(showStep.includes("$('#intro').hidden = state.index > 0;"));
+  // and the success and failure screens hide it too
+  assert.ok(app.includes("$('#intro').hidden = true; $('#success').hidden = false;"));
+  assert.ok(app.includes("$('#intro').hidden = true; $('#failure').hidden = false;"));
 });

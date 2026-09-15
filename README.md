@@ -124,11 +124,12 @@ TMS on 2026-09-15; the rest are recorded for provenance.
 
 ## Presentation rules
 
-1. **The introduction is an opening-page block.** The heading, the two lead
-   paragraphs, the Ombudsman disclaimer and the privacy link are shown on the
-   landing page and on the first step - which is where the mode-specific
-   wording is finally known - and hidden from every step after. Repeated above
-   each question it pushed the question itself below the fold on a phone, and
+1. **The introduction is shown exactly once, on the first step.** The heading,
+   the two lead paragraphs, the Ombudsman disclaimer and the privacy link are
+   hidden in the markup and revealed by `showStep` on step 1 - which is where
+   the mode-specific wording is finally known - then hidden from every step
+   after. The landing page asks for the reference alone. Repeated above each
+   question the block pushed the question itself below the fold on a phone, and
    it has no place on the review page. A privacy link remains reachable
    everywhere: the footer carries one on every page, and the review step has
    its own alongside its notice.
