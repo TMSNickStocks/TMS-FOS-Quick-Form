@@ -50,6 +50,7 @@
     ['Fuel or transport costs', 'fosOutTransport']
   ];
   const VULNERABILITY_NONE = 'None of these apply';
+  const UNKNOWN_DATE_LABEL = "I don't know the exact date";
   const MONEY_MESSAGE = 'Please enter an amount in pounds, for example 250 or 1250.50';
 
   function showError(message) {
@@ -103,7 +104,8 @@
     q2Remember: 'tb2', q2RememberWhat: 'tb2', q2MadeThink: 'tb2', q2Explain: 'tb2', q2OtherMemory: 'tb2',
     q3Circumstances: 'tb3', q3Dates: 'tb3', q3Explain: 'tb3',
     fosVulnerabilities: 'fos1', fosVulnerabilityDetail: 'fos1',
-    fosCourtAction: 'fos2', fosLendingStart: 'fos2', fosLendingAmount: 'fos2', fosBalancesPaid: 'fos2',
+    fosCourtAction: 'fos2', fosLendingStart: 'fos2', fosLendingStartUnknown: 'fos2',
+    fosLendingAmount: 'fos2', fosBalancesPaid: 'fos2',
     fosIncomeEmployment: 'fos3', fosIncomeBenefits: 'fos3', fosIncomeMaintenance: 'fos3', fosIncomePension: 'fos3',
     fosSavings: 'fos3', fosOutHousing: 'fos3', fosOutUtilities: 'fos3', fosOutFood: 'fos3', fosOutTransport: 'fos3',
     fosOtherExpenses: 'fos3', fosDependants: 'fos3', fosFurtherLending: 'fos3',
@@ -136,6 +138,17 @@
     } else {
       boxes.forEach((b) => { if (b.value === VULNERABILITY_NONE) b.checked = false; });
     }
+  }
+
+  // The exact date and "I don't know the exact date" are mutually exclusive, in
+  // both directions. Enforced again on the server.
+  function enforceLendingDateExclusivity(changed) {
+    const unknown = $('#fosLendingStartUnknown');
+    const date = $('#fosLendingStart');
+    if (!unknown || !date) return;
+    if (changed === unknown && unknown.checked) date.value = '';
+    if (changed === date && date.value) unknown.checked = false;
+    date.disabled = unknown.checked;
   }
 
   function loadPrefill(data) {
@@ -181,6 +194,9 @@
 
   form.addEventListener('change', (e) => {
     if (e.target && e.target.name === 'fosVulnerabilities') enforceVulnerabilityExclusivity(e.target);
+    if (e.target && (e.target.name === 'fosLendingStartUnknown' || e.target.name === 'fosLendingStart')) {
+      enforceLendingDateExclusivity(e.target);
+    }
     updateConditionals();
   });
   $$('.next').forEach((b) => b.addEventListener('click', () => {
@@ -226,9 +242,18 @@
     }
     if (step === 'fos2') {
       need('fosCourtAction');
+      const unknownDate = $('#fosLendingStartUnknown').checked;
       const start = value('#fosLendingStart');
-      if (!start) { fieldError('fosLendingStart', 'Please enter the date the lending started.'); ok = false; }
-      else if (start > new Date().toISOString().slice(0, 10)) { fieldError('fosLendingStart', 'The date cannot be in the future.'); ok = false; }
+      if (unknownDate && start) {
+        fieldError('fosLendingStart', `Please either enter the date or tick “${UNKNOWN_DATE_LABEL}”, not both.`);
+        ok = false;
+      } else if (!unknownDate && !start) {
+        fieldError('fosLendingStart', `Please enter the date the lending started, or tick “${UNKNOWN_DATE_LABEL}”.`);
+        ok = false;
+      } else if (start && start > new Date().toISOString().slice(0, 10)) {
+        fieldError('fosLendingStart', 'The date cannot be in the future.');
+        ok = false;
+      }
       const amount = value('#fosLendingAmount');
       if (!amount) { fieldError('fosLendingAmount', 'Please enter an amount.'); ok = false; }
       else if (!moneyOk(amount)) { fieldError('fosLendingAmount', MONEY_MESSAGE); ok = false; }
@@ -256,7 +281,10 @@
       fosVulnerabilities: checkedValues('fosVulnerabilities'),
       fosVulnerabilityDetail: value('#fosVulnerabilityDetail'),
       fosCourtAction: selected('fosCourtAction'),
-      fosLendingStart: value('#fosLendingStart'),
+      // When the client says they do not know the date, no date is sent: there
+      // is nothing to generate or infer from.
+      fosLendingStartUnknown: $('#fosLendingStartUnknown').checked,
+      fosLendingStart: $('#fosLendingStartUnknown').checked ? '' : value('#fosLendingStart'),
       fosLendingAmount: value('#fosLendingAmount'),
       fosBalancesPaid: selected('fosBalancesPaid'),
       fosSavings: selected('fosSavings'),
@@ -317,7 +345,7 @@
     rows.push(['Do any of the following apply?', d.fosVulnerabilities.length ? d.fosVulnerabilities.join('\n') : NOT_PROVIDED]);
     rows.push(['If there’s anything else you’d like to tell us about this, you can do so here', displayText(d.fosVulnerabilityDetail)]);
     rows.push(['Has there been any court action related to the complaint (or is any planned)?', d.fosCourtAction]);
-    rows.push(['When did the lending start?', displayDate(d.fosLendingStart)]);
+    rows.push(['When did the lending start?', d.fosLendingStartUnknown ? UNKNOWN_DATE_LABEL : displayDate(d.fosLendingStart)]);
     rows.push(['How much was the lending initially for?', displayMoney(d.fosLendingAmount)]);
     rows.push(['Have any outstanding balances been paid?', d.fosBalancesPaid]);
     INCOME_ROWS.forEach(([label, f]) => rows.push([`Income — ${label}`, displayMoney(d[f])]));

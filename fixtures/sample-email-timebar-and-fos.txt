@@ -82,7 +82,7 @@ CLIENT ANSWER:
 
 FOS QUESTIONNAIRE RESPONSES
 
-[FOS_VULNERABILITY] 1. Vulnerabilities (“Tailoring to their circumstances”)
+[FOS_VULNERABILITY] 1. Your circumstances
 QUESTION:
   Do any of the following apply?
 NOTE:
@@ -121,7 +121,7 @@ QUESTION:
 NOTE:
   For example 01/01/2025
 CLIENT ANSWER:
-  18/04/2016 [value: 2016-04-18]
+  I don't know the exact date
 
 [FOS_LENDING_AMOUNT] 4. How much was the lending initially for?
 QUESTION:
@@ -137,7 +137,7 @@ QUESTION:
 CLIENT ANSWER:
   Yes
 
-[FOS_INCOME] 6. “Your customer's finances when they borrowed”
+[FOS_INCOME] 6. Your finances when you borrowed
 QUESTION:
   Income type — Monthly net amount (£)
 CLIENT ANSWER:

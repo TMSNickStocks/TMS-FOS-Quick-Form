@@ -14,6 +14,7 @@ const FOS = {
   fosVulnerabilityDetail: 'I was signed off work for several months and found the paperwork hard to follow.',
   fosCourtAction: 'No',
   fosLendingStart: '2016-04-18',
+  fosLendingStartUnknown: false,
   fosLendingAmount: '1200',
   fosBalancesPaid: 'Yes',
   fosIncomeEmployment: '1450.00', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
@@ -38,7 +39,9 @@ const TIMEBAR = {
 
 const out = [
   ['fos-only', { ...FOS, mode: 'FOS_ONLY' }],
-  ['timebar-and-fos', { ...FOS, ...TIMEBAR, mode: 'TIMEBAR_AND_FOS' }]
+  // The combined example also exercises the approved "I don't know the exact
+  // date" answer, so both lending-date paths appear in the worked examples.
+  ['timebar-and-fos', { ...FOS, ...TIMEBAR, mode: 'TIMEBAR_AND_FOS', fosLendingStart: '', fosLendingStartUnknown: true }]
 ];
 for (const [name, data] of out) {
   const { text, html } = buildEmail(data, META);

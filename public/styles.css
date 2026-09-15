@@ -186,3 +186,7 @@ details.examples > summary:focus-visible { outline: 3px solid var(--focus); outl
 .money-row input { max-width: 220px; }
 
 .summary-item span { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* An alternative answer offered beside an input, e.g. "I don't know the exact
+   date" next to the date control. Spaced away so it never reads as a caption. */
+.or-option { margin-top: 12px; }

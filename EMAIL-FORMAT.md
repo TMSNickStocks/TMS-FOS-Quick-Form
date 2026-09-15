@@ -51,6 +51,21 @@ In `FOS_ONLY` the Time-Bar section is omitted completely: no heading, no blocks,
 no Time-Bar wording anywhere in the record, and the two Time-Bar admin rows are
 absent.
 
+## Headings
+
+Block headings are presentation only. Two of them are the client-facing
+headings TMS approved on 2026-09-15 in place of the source's own
+representative-facing ones:
+
+| Source heading | Heading used |
+|---|---|
+| `1. Vulnerabilities ("Tailoring to their circumstances")` | `1. Your circumstances` |
+| `6. "Your customer's finances when they borrowed"` | `6. Your finances when you borrowed` |
+
+Every question, option, example and piece of evidence wording beneath them is
+unchanged. The record uses the same headings the client saw, so it still shows
+exactly what was put to them.
+
 ## Admin section
 
 `Label: value` lines. Continuation lines are indented two spaces. Which labels
@@ -127,7 +142,7 @@ question is reproduced with their answer in its own block,
 Both financial groups print the full group question and then one line per row:
 
 ```
-[FOS_INCOME] 6. “Your customer's finances when they borrowed”
+[FOS_INCOME] 6. Your finances when you borrowed
 QUESTION:
   Income type — Monthly net amount (£)
 CLIENT ANSWER:
@@ -141,6 +156,24 @@ row is `Not provided`, never `0`.
 
 The lending start date follows the same pattern in the source's own DD/MM/YYYY
 form: `18/04/2016 [value: 2016-04-18]`.
+
+If the client answered the same question by ticking **I don't know the exact
+date**, the block still reproduces the full approved question and its note, and
+the answer is simply:
+
+```
+[FOS_LENDING_START] 3. When did the lending start?
+QUESTION:
+  When did the lending start?
+NOTE:
+  For example 01/01/2025
+CLIENT ANSWER:
+  I don't know the exact date
+```
+
+No date is generated or inferred, no `[value: …]` is emitted, and it is not
+recorded as `Not provided` — the record carries the answer the client actually
+gave.
 
 **No affordability calculation, total, surplus or shortfall is derived, and no
 advice is given to the client.** `tests/email.test.js` asserts the record

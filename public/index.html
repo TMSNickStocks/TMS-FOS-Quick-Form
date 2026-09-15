@@ -177,7 +177,7 @@
     <!-- ===================== FOS questionnaire =====================
          Approved wording, reproduced from "FOS Q's for clients.pdf". -->
     <section class="step" data-step="fos1" hidden>
-      <h2>1. Vulnerabilities (“Tailoring to their circumstances”)</h2>
+      <h2>1. Your circumstances</h2>
       <fieldset class="form-row">
         <legend>Do any of the following apply?</legend>
         <div class="help">Please select all that apply:</div>
@@ -285,11 +285,15 @@
       </fieldset>
 
       <h2>3. When did the lending start?</h2>
-      <div class="form-row">
-        <label for="fosLendingStart">When did the lending start?</label>
+      <fieldset class="form-row">
+        <legend>When did the lending start?</legend>
+        <label for="fosLendingStart">Date the lending started</label>
         <input id="fosLendingStart" name="fosLendingStart" type="date" autocomplete="off">
         <div class="help">For example 01/01/2025</div>
-      </div>
+        <div class="radio-list or-option">
+          <label class="choice"><input id="fosLendingStartUnknown" type="checkbox" name="fosLendingStartUnknown" value="yes"><span>I don't know the exact date</span></label>
+        </div>
+      </fieldset>
 
       <h2>4. How much was the lending initially for?</h2>
       <div class="form-row">
@@ -310,7 +314,7 @@
     </section>
 
     <section class="step" data-step="fos3" hidden>
-      <h2>6. “Your customer's finances when they borrowed”</h2>
+      <h2>6. Your finances when you borrowed</h2>
 
       <fieldset class="form-row">
         <legend>Income type — Monthly net amount (£)</legend>

@@ -13,7 +13,7 @@ const {
 const { TIMEBAR_QUESTIONS } = require('../lib/questions-timebar');
 const {
   FOS_QUESTIONS, VULNERABILITY_OPTIONS, VULNERABILITY_VALUES, VULNERABILITY_NONE,
-  EXAMPLES_INTRO, EXAMPLES_TOGGLE, INCOME_ROWS, OUTGOING_ROWS,
+  EXAMPLES_INTRO, EXAMPLES_TOGGLE, UNKNOWN_DATE_LABEL, INCOME_ROWS, OUTGOING_ROWS,
   INCOME_GROUP_LABEL, INCOME_AMOUNT_LABEL, OUTGOING_GROUP_LABEL, OUTGOING_AMOUNT_LABEL
 } = require('../lib/questions-fos');
 
@@ -66,9 +66,21 @@ test('the financial group labels and every row label appear verbatim', () => {
   }
 });
 
-test('no "I don\'t know" or other unapproved answer option was added', () => {
-  const banned = [/don.t know/i, /not sure/i, /prefer not to say/i, /unsure/i, /n\/a/i];
+test('the only "I don\'t know" answer is the one TMS approved for the lending date', () => {
   // Checked against the FOS steps only: "Not sure" is approved Time-Bar wording.
+  const fosMarkup = html.slice(html.indexOf('data-step="fos1"'), html.indexOf('data-step="review"'));
+  const occurrences = (fosMarkup.match(/don.t know/gi) || []).length;
+  assert.equal(occurrences, 1, 'exactly one "don\'t know" answer may exist in the FOS questions');
+  assert.ok(fosMarkup.includes(UNKNOWN_DATE_LABEL), 'and it must carry the approved wording exactly');
+  assert.equal(UNKNOWN_DATE_LABEL, "I don't know the exact date");
+  // It belongs to the lending start date question and nothing else.
+  const block = FOS_QUESTIONS.find((q) => q.unknownField);
+  assert.equal(block.id, 'FOS_LENDING_START');
+  assert.equal(FOS_QUESTIONS.filter((q) => q.unknownField).length, 1);
+});
+
+test('no other unapproved answer option was added to the FOS questions', () => {
+  const banned = [/not sure/i, /prefer not to say/i, /unsure/i, /n\/a/i, /cannot remember/i];
   const fosMarkup = html.slice(html.indexOf('data-step="fos1"'), html.indexOf('data-step="review"'));
   for (const re of banned) assert.ok(!re.test(fosMarkup), `unapproved FOS answer option matching ${re}`);
 });
@@ -196,4 +208,88 @@ test('the client form adapts its step sequence to the questionnaire mode', () =>
   assert.match(app, /TIMEBAR_AND_FOS:\s*\['details', 'tb1', 'tb2', 'tb3', 'fos1', 'fos2', 'fos3', 'review'\]/);
   // the progress indicator is computed from the sequence, not hard-coded
   assert.match(app, /Step \$\{state\.index \+ 1\} of \$\{state\.steps\.length\}/);
+});
+
+// ------------------------------------------- approved presentation headings
+
+// TMS approved replacing two representative-facing source headings with
+// client-facing ones on 2026-09-15. These tests prove the change was
+// presentation only: the substantive question, options, examples and evidence
+// wording beneath each heading are still exactly the source wording.
+
+// Distinctive fragments of the two source headings. "Vulnerabilities" alone is
+// not listed because it is still the internal field name `fosVulnerabilities`,
+// which no client or reviewer ever sees; the visible-heading check below covers
+// that separately.
+const OLD_HEADINGS = [
+  'Tailoring to their circumstances',
+  "Your customer's finances when they borrowed",
+  'your customer',
+  'when they borrowed'
+];
+
+test('the two approved client-facing headings are the ones shown', () => {
+  assert.equal(FOS_QUESTIONS.find((q) => q.id === 'FOS_VULNERABILITY').heading, '1. Your circumstances');
+  assert.equal(FOS_QUESTIONS.find((q) => q.id === 'FOS_INCOME').heading, '6. Your finances when you borrowed');
+  assert.ok(inForm('1. Your circumstances'));
+  assert.ok(inForm('6. Your finances when you borrowed'));
+});
+
+test('no representative-facing heading survives anywhere a client or reviewer can see', () => {
+  const { buildEmail } = require('../lib/email-template');
+  const record = buildEmail({
+    mode: MODE_FOS_ONLY, clientName: 'A', reference: '200000001', lender: 'L', product: 'Loan',
+    fosVulnerabilities: [VULNERABILITY_NONE], fosCourtAction: 'No', fosLendingStart: '2015-06-01',
+    fosLendingAmount: '100', fosBalancesPaid: 'Yes', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No'
+  }, { submissionId: 'x' });
+  for (const old of OLD_HEADINGS) {
+    assert.ok(!html.includes(old), `old heading fragment still in the form: ${old}`);
+    assert.ok(!record.text.includes(old), `old heading fragment still in the text record: ${old}`);
+    assert.ok(!record.html.includes(old), `old heading fragment still in the HTML record: ${old}`);
+  }
+  // No visible heading on the page says "Vulnerabilities" either.
+  const visibleHeadings = [...html.matchAll(/<h2>([^<]*)<\/h2>/g)].map((m) => m[1]);
+  for (const h of visibleHeadings) {
+    assert.ok(!/vulnerabilit/i.test(h), `heading still uses the source's own label: ${h}`);
+  }
+});
+
+test('the heading change did not touch the substantive wording beneath it', () => {
+  // Section 1: the question, its instruction, all five options and every
+  // example are still the source wording.
+  const vuln = FOS_QUESTIONS.find((q) => q.id === 'FOS_VULNERABILITY');
+  assert.equal(vuln.question, 'Do any of the following apply?');
+  assert.equal(vuln.note, 'Please select all that apply:');
+  assert.equal(VULNERABILITY_VALUES.length, 5);
+  assert.deepEqual(VULNERABILITY_OPTIONS.map((o) => o.examples.length), [8, 11, 3, 6, 0]);
+  assert.equal(VULNERABILITY_OPTIONS[0].examples[0], 'long-term or severe illness');
+  assert.equal(VULNERABILITY_OPTIONS[1].examples[10], 'criminal conviction');
+
+  // Section 6: the group question and every row label are still the source
+  // wording, including the second-person rows the source itself uses.
+  const income = FOS_QUESTIONS.find((q) => q.id === 'FOS_INCOME');
+  assert.equal(income.question, 'Income type — Monthly net amount (£)');
+  assert.deepEqual(INCOME_ROWS.map(([l]) => l), ['Employment', 'Benefits', 'Maintenance', 'Pension']);
+  assert.deepEqual(OUTGOING_ROWS.map(([l]) => l), [
+    'Housing costs (like mortgage, rent or council housing payment)',
+    'Utilities (like gas, electric, phone, council tax, water)',
+    'Food or grocery costs',
+    'Fuel or transport costs'
+  ]);
+  assert.equal(FOS_QUESTIONS.find((q) => q.id === 'FOS_SAVINGS').question,
+    'Did you have any savings at the time of the initial lending?');
+  assert.equal(FOS_QUESTIONS.find((q) => q.id === 'FOS_OUTGOINGS').question,
+    'Essential outgoings — Monthly contribution (£)');
+});
+
+test('only the two headings changed: every other FOS heading is still the source wording', () => {
+  const headings = FOS_QUESTIONS.filter((q) => q.heading).map((q) => q.heading);
+  assert.deepEqual(headings, [
+    '1. Your circumstances',
+    '2. Has there been any court action related to the complaint (or is any planned)?',
+    '3. When did the lending start?',
+    '4. How much was the lending initially for?',
+    '5. Have any outstanding balances been paid?',
+    '6. Your finances when you borrowed'
+  ]);
 });

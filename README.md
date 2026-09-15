@@ -26,25 +26,37 @@ modify TMS-Timebar-Quick-Form or TMS-Timebar-Portal.**
 | Time-Bar | the live, approved TMS-Timebar-Quick-Form | reproduced byte-for-byte; a locked SHA-256 of the approved wording in `tests/validation.test.js` fails the build on any edit |
 
 No question has been reworded, expanded, reordered or simplified, and no extra
-question or "I don't know" answer has been added.
+question has been added.
+
+Two changes were made on TMS instruction on 2026-09-15, and only these two:
+
+1. **Presentation headings** for sections 1 and 6 (see "Source ambiguities"
+   below). Headings only — no question, option, example or evidence wording was
+   touched.
+2. **One added answer:** `I don't know the exact date`, offered against the
+   otherwise unchanged question `When did the lending start?`. No other
+   "I don't know" or equivalent answer exists anywhere in the FOS questions, and
+   a test fails the build if one is added.
 
 ---
 
-## Source ambiguities
+## Source ambiguities, and how they were resolved
 
-Flagged rather than silently corrected. **These need a decision before the form
-goes live.**
+Each was flagged to TMS rather than guessed at. Items 1 and 4 were resolved by
+TMS on 2026-09-15; the rest are recorded for provenance.
 
-1. **Two headings address a professional representative, not the client.**
-   The source prints `1. Vulnerabilities (“Tailoring to their circumstances”)`
-   and `6. “Your customer's finances when they borrowed”`. Both are written from
+1. **Two headings addressed a professional representative, not the client.**
+   The source prints `1. Vulnerabilities ("Tailoring to their circumstances")`
+   and `6. "Your customer's finances when they borrowed"`. Both are written from
    the point of view of someone completing the FOS form *about* a customer,
    while the questions beneath them are in the second person ("Did *you* have
-   any savings…"). Shown to a client, they read oddly. They are reproduced
-   verbatim as approved wording. If TMS wants client-facing headings, that is a
-   wording change and needs approval.
+   any savings..."). **Resolved: TMS approved client-facing presentation
+   headings** - `1. Your circumstances` and `6. Your finances when you
+   borrowed`. This is a presentation change only; every question, answer option,
+   example and piece of evidence wording beneath them is unchanged, which
+   `tests/questions.test.js` and `tests/email.test.js` both assert.
 
-2. **`See examples (dropdown)`** — "(dropdown)" is an authoring instruction, not
+2. **`See examples (dropdown)`** - "(dropdown)" is an authoring instruction, not
    client-facing text. The visible control label is `See examples`; the
    disclosure itself is the dropdown.
 
@@ -52,22 +64,22 @@ goes live.**
    rent or council housing payment)` and the utilities row) are printed across
    two lines inside one table cell. They are treated as one label each.
 
-4. **The source marks nothing as mandatory.** Choices made, and open for review:
+4. **The source marks nothing as mandatory.** Choices made:
    - **Required:** the vulnerability question (at least one box, since a
      `None of these apply` option only means something if an answer is
      expected), court action, lending start date, initial lending amount,
      balances paid, savings, dependants, further lending.
    - **Optional:** every income and outgoings amount, and all three free-text
      boxes.
-   - A client who cannot recall the exact lending start date currently cannot
-     continue. The brief forbids adding an "I don't know" answer, so this is
-     flagged rather than worked around.
+   - The lending start date was originally a dead end for a client who could not
+     recall it. **Resolved: TMS approved an "I don't know the exact date"
+     alternative** for that question only. The approved question is unchanged;
+     the two answers are mutually exclusive; and choosing the alternative never
+     generates or infers a date.
 
 5. **`For example 01/01/2025`** implies DD/MM/YYYY. The form uses a native date
    control, so the client picks a date and the ambiguity does not arise; the
    record prints DD/MM/YYYY alongside the ISO value.
-
----
 
 ## Deliberate differences from TMS-Timebar-Quick-Form
 

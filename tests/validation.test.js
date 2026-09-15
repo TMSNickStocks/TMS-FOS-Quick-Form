@@ -291,3 +291,84 @@ test('the Time-Bar field names are unchanged, so the record stays comparable', (
     'q3Circumstances', 'q3Dates', 'q3Explain'
   ]);
 });
+
+// ------------------------------------ lending start date / "I don't know"
+//
+// Approved 2026-09-15: a client must not be forced to invent an exact date.
+// The two answers are mutually exclusive, and choosing "I don't know" must
+// never cause a date to be generated or inferred.
+
+const { UNKNOWN_DATE_LABEL } = require('../lib/questions-fos');
+
+test('the approved label is exactly the wording TMS specified', () => {
+  assert.equal(UNKNOWN_DATE_LABEL, "I don't know the exact date");
+});
+
+test('an exact date is still accepted and recorded', () => {
+  const r = validateSubmission(base({ fosLendingStart: '2016-04-18' }));
+  assert.equal(r.ok, true);
+  assert.equal(r.value.fosLendingStart, '2016-04-18');
+  assert.equal(r.value.fosLendingStartUnknown, false);
+});
+
+test('"I don\'t know the exact date" is accepted with no date at all', () => {
+  const r = validateSubmission(base({ fosLendingStart: '', fosLendingStartUnknown: true }));
+  assert.deepEqual(r.errors, {});
+  assert.equal(r.ok, true);
+  assert.equal(r.value.fosLendingStartUnknown, true);
+  assert.equal(r.value.fosLendingStart, '', 'no date is generated or inferred');
+});
+
+test('the date is no longer required once the client says they do not know it', () => {
+  const missing = validateSubmission(base({ fosLendingStart: '' }));
+  assert.match(missing.errors.fosLendingStart, /Please enter the date/);
+  const unknown = validateSubmission(base({ fosLendingStart: '', fosLendingStartUnknown: true }));
+  assert.equal(unknown.errors.fosLendingStart, undefined);
+});
+
+test('a date and "I don\'t know" together are rejected as mutually exclusive', () => {
+  const r = validateSubmission(base({ fosLendingStart: '2016-04-18', fosLendingStartUnknown: true }));
+  assert.equal(r.ok, false);
+  assert.match(r.errors.fosLendingStart, /not both/);
+});
+
+test('a date smuggled alongside "I don\'t know" never reaches the record', () => {
+  // Even if the pair were somehow accepted, the stored date is forced empty so
+  // nothing can be read back out of it later.
+  const r = validateSubmission(base({ fosLendingStart: '2016-04-18', fosLendingStartUnknown: true }));
+  assert.equal(r.value.fosLendingStart, '');
+});
+
+test('neither a date nor "I don\'t know" is still rejected', () => {
+  const r = validateSubmission(base({ fosLendingStart: '', fosLendingStartUnknown: false }));
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.fosLendingStart);
+});
+
+test('the unknown-date flag must be a real boolean', () => {
+  for (const bad of ['true', 'yes', 'on', 1, {}, []]) {
+    const r = validateSubmission(base({ fosLendingStart: '', fosLendingStartUnknown: bad }));
+    assert.equal(r.ok, false, `must reject ${JSON.stringify(bad)}`);
+    assert.equal(r.errors.fosLendingStartUnknown, 'Invalid choice');
+  }
+  // absent is simply unticked
+  const absent = validateSubmission(base({ fosLendingStart: '2016-04-18' }));
+  assert.equal(absent.value.fosLendingStartUnknown, false);
+});
+
+test('an invalid or future date is still rejected when "I don\'t know" is not ticked', () => {
+  assert.ok(validateSubmission(base({ fosLendingStart: '2016-02-30' })).errors.fosLendingStart);
+  const future = new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10);
+  assert.match(validateSubmission(base({ fosLendingStart: future })).errors.fosLendingStart, /future/);
+});
+
+test('the unknown-date field is accepted in both questionnaire modes', () => {
+  for (const payload of [
+    base({ fosLendingStart: '', fosLendingStartUnknown: true }),
+    combined({ fosLendingStart: '', fosLendingStartUnknown: true })
+  ]) {
+    const r = validateSubmission(payload);
+    assert.notEqual(r.errors._form, 'Unknown field');
+    assert.equal(r.ok, true);
+  }
+});

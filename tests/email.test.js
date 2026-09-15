@@ -446,3 +446,73 @@ test('a missing submission id is recorded as not provided rather than blank', ()
   const { text } = buildEmail({ ...FOS_BASE }, {});
   assert.match(text, new RegExp(`^Submission ID: ${NOT_PROVIDED}$`, 'm'));
 });
+
+// -------------------------------- lending date: exact vs "I don't know"
+
+const { UNKNOWN_DATE_LABEL } = require('../lib/questions-fos');
+
+test('an exact date is recorded with the full question and both formats', () => {
+  const b = parse(fosOnly({ fosLendingStart: '2016-04-18', fosLendingStartUnknown: false }).text).byId.FOS_LENDING_START;
+  assert.equal(b.question.join('\n'), 'When did the lending start?');
+  assert.equal(b.answer.join('\n'), '18/04/2016 [value: 2016-04-18]');
+});
+
+test('"I don\'t know the exact date" is recorded as the answer, with the full question', () => {
+  const { text, html } = fosOnly({ fosLendingStart: '', fosLendingStartUnknown: true });
+  const b = parse(text).byId.FOS_LENDING_START;
+  assert.equal(b.heading, '3. When did the lending start?');
+  assert.equal(b.question.join('\n'), 'When did the lending start?', 'the approved question is still reproduced in full');
+  assert.equal(b.note.join('\n'), 'For example 01/01/2025');
+  assert.equal(b.answer.join('\n'), UNKNOWN_DATE_LABEL);
+  assert.ok(html.includes(esc(UNKNOWN_DATE_LABEL)), 'and in the HTML record');
+});
+
+test('no date is generated or inferred when the client does not know it', () => {
+  const { text, html } = fosOnly({ fosLendingStart: '', fosLendingStartUnknown: true });
+  const b = parse(text).byId.FOS_LENDING_START;
+  assert.ok(!/\d{2}\/\d{2}\/\d{4}/.test(b.answer.join('\n')), 'no DD/MM/YYYY date appears in the answer');
+  assert.ok(!b.answer.join('\n').includes('[value:'), 'no machine value is emitted either');
+  assert.ok(!b.answer.join('\n').includes(NOT_PROVIDED), 'and it is not recorded as a blank');
+  // nowhere in the record does a fabricated date for this question appear
+  assert.ok(!html.includes('1970'), 'no epoch date leaked into the record');
+});
+
+test('a stray date is ignored if the client said they do not know it', () => {
+  // Defence in depth: the validator forces the date empty, but the record must
+  // prefer the "I don't know" answer even if a date somehow reaches it.
+  const b = parse(fosOnly({ fosLendingStart: '2016-04-18', fosLendingStartUnknown: true }).text).byId.FOS_LENDING_START;
+  assert.equal(b.answer.join('\n'), UNKNOWN_DATE_LABEL);
+  assert.ok(!b.answer.join('\n').includes('18/04/2016'));
+});
+
+test('the unknown-date answer appears in the combined record too', () => {
+  const b = parse(combined({ fosLendingStart: '', fosLendingStartUnknown: true }).text).byId.FOS_LENDING_START;
+  assert.equal(b.answer.join('\n'), UNKNOWN_DATE_LABEL);
+});
+
+// ------------------------------- approved client-facing presentation headings
+
+test('the record carries the approved client-facing headings', () => {
+  const { text, html } = fosOnly();
+  const byId = parse(text).byId;
+  assert.equal(byId.FOS_VULNERABILITY.heading, '1. Your circumstances');
+  assert.equal(byId.FOS_INCOME.heading, '6. Your finances when you borrowed');
+  assert.ok(html.includes('1. Your circumstances'));
+  assert.ok(html.includes('6. Your finances when you borrowed'));
+});
+
+test('the heading change did not alter any question or answer in the record', () => {
+  const byId = parse(fosOnly().text).byId;
+  // Section 1: question, instruction and all five options are unchanged.
+  assert.equal(byId.FOS_VULNERABILITY.question.join('\n'), 'Do any of the following apply?');
+  assert.equal(byId.FOS_VULNERABILITY.note.join('\n'), 'Please select all that apply:');
+  assert.equal(byId.FOS_VULNERABILITY.options.length, 5);
+  // Section 6: group question and every row label are unchanged.
+  assert.equal(byId.FOS_INCOME.question.join('\n'), 'Income type — Monthly net amount (£)');
+  for (const [label] of INCOME_ROWS) {
+    assert.ok(byId.FOS_INCOME.answer.some((a) => a.startsWith(`${label}: `)), `${label} still recorded`);
+  }
+  for (const [label] of OUTGOING_ROWS) {
+    assert.ok(byId.FOS_OUTGOINGS.answer.some((a) => a.startsWith(`${label}: `)), `${label} still recorded`);
+  }
+});

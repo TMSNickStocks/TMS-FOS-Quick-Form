@@ -15,7 +15,7 @@ Product: Credit card
 
 FOS QUESTIONNAIRE RESPONSES
 
-[FOS_VULNERABILITY] 1. Vulnerabilities (“Tailoring to their circumstances”)
+[FOS_VULNERABILITY] 1. Your circumstances
 QUESTION:
   Do any of the following apply?
 NOTE:
@@ -70,7 +70,7 @@ QUESTION:
 CLIENT ANSWER:
   Yes
 
-[FOS_INCOME] 6. “Your customer's finances when they borrowed”
+[FOS_INCOME] 6. Your finances when you borrowed
 QUESTION:
   Income type — Monthly net amount (£)
 CLIENT ANSWER:

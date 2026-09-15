@@ -73,7 +73,8 @@ form. Omitted entirely in `FOS_ONLY`.
 | `FOS_VULNERABILITY` | `fosVulnerabilities` | 5 checkboxes | yes, at least one | array of approved option strings |
 | `FOS_VULNERABILITY_DETAIL` | `fosVulnerabilityDetail` | textarea | no | 1400 |
 | `FOS_COURT_ACTION` | `fosCourtAction` | radio Yes/No | yes | — |
-| `FOS_LENDING_START` | `fosLendingStart` | date | yes | real past date, ≥ 1900, not future |
+| `FOS_LENDING_START` | `fosLendingStart` | date | yes, unless the client does not know it | real past date, ≥ 1900, not future |
+| `FOS_LENDING_START` | `fosLendingStartUnknown` | checkbox “I don't know the exact date” | no | boolean; mutually exclusive with the date |
 | `FOS_LENDING_AMOUNT` | `fosLendingAmount` | text, decimal keypad | yes | pounds, ≤ 2 dp |
 | `FOS_BALANCES_PAID` | `fosBalancesPaid` | radio Yes/No | yes | — |
 | `FOS_INCOME` | `fosIncomeEmployment` | text, decimal keypad | no | pounds |
@@ -103,6 +104,21 @@ browser **and** on the server.
 Selecting a vulnerability category never obliges the client to type an
 explanation: the source questionnaire does not require it.
 
+### Lending start date
+
+Approved 2026-09-15: a client is never forced to invent a date. The approved
+question is unchanged and the client answers it either with an exact date or by
+ticking **I don't know the exact date**.
+
+- The two are mutually exclusive, enforced in the browser **and** on the server.
+- Ticking the checkbox clears and disables the date field; entering a date
+  unticks the checkbox.
+- When the checkbox is ticked the date is **not** required, and no date is
+  generated or inferred — the stored value is forced empty.
+- The review page shows `I don't know the exact date`.
+- The record reproduces the full question and records
+  `CLIENT ANSWER: I don't know the exact date`.
+
 ### Money handling
 
 Input accepts `£`, thousands separators and spaces. Stored canonically
@@ -130,8 +146,9 @@ Input accepts `£`, thousands separators and spaces. Stored canonically
 - Admin fields collected by staff: **5** (FOS-only) / **7** (combined)
 - Time-Bar question blocks: **14**; Time-Bar accepted keys: **16** (combined only,
   the 14 answers plus `communicationEvent` and `communicationDate`)
-- FOS question blocks: **12**; FOS accepted keys: **18** (the two financial
-  groups carry four fields each)
+- FOS question blocks: **12**; FOS accepted keys: **19** (the two financial
+  groups carry four fields each, and the lending-date question carries the
+  date plus its “I don't know” checkbox)
 - Common keys (matter details, token, confirmation, bot controls): **9**
-- **Total accepted keys: 27 (FOS-only) / 43 (combined).** Anything else is
+- **Total accepted keys: 28 (FOS-only) / 44 (combined).** Anything else is
   rejected as an unknown field.
