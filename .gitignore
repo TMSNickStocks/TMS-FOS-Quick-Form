@@ -1,11 +1,18 @@
 node_modules/
-.vercel/
-.env
-.env.*
-!.env.example
 *.log
 .DS_Store
 Thumbs.db
 
-.vercel
-.env*
+# Vercel CLI local state (project and org ids).
+.vercel/
+
+# Real environment files never enter the repository. .env.example is the one
+# exception: it is a template of variable names carrying no values.
+#
+# Order matters. A broad `.env*` pattern placed after this negation re-ignores
+# the template, which is what happened before: the template was silently
+# dropped, so the repository carried no record of which variables the
+# deployment needs. Keep the negation last, and do not add `.env*` below it.
+.env
+.env.*
+!.env.example
