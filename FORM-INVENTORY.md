@@ -71,9 +71,14 @@ form. Omitted entirely in `FOS_ONLY`.
 | Block ID | Field | Control | Required | Max / format |
 |---|---|---|---|---|
 | `FOS_VULNERABILITY` | `fosVulnerabilities` | 5 checkboxes | yes, at least one | array of approved option strings |
-| `FOS_VULNERABILITY_EXPLANATION` | `fosVulnerabilityExplanation` | textarea | yes, when a category is selected | 1400 |
-| `FOS_VULNERABILITY_EXPLANATION` | `fosVulnerabilityExplanationDeclined` | checkbox | no | boolean; mutually exclusive with the text |
-| `FOS_VULNERABILITY_DETAIL` | `fosVulnerabilityDetail` | textarea | no | 1400 |
+| `FOS_VULNERABILITY_HEALTH_DETAIL` | `fosVulnerabilityHealthDetail` | textarea | yes, when category 1 is selected | 1400 |
+| `FOS_VULNERABILITY_HEALTH_DETAIL` | `fosVulnerabilityHealthDetailDeclined` | checkbox | no | boolean; mutually exclusive with the text |
+| `FOS_VULNERABILITY_LIFE_EVENT_DETAIL` | `fosVulnerabilityLifeEventDetail` | textarea | yes, when category 2 is selected | 1400 |
+| `FOS_VULNERABILITY_LIFE_EVENT_DETAIL` | `fosVulnerabilityLifeEventDetailDeclined` | checkbox | no | boolean; mutually exclusive with the text |
+| `FOS_VULNERABILITY_RESILIENCE_DETAIL` | `fosVulnerabilityResilienceDetail` | textarea | yes, when category 3 is selected | 1400 |
+| `FOS_VULNERABILITY_RESILIENCE_DETAIL` | `fosVulnerabilityResilienceDetailDeclined` | checkbox | no | boolean; mutually exclusive with the text |
+| `FOS_VULNERABILITY_CAPABILITY_DETAIL` | `fosVulnerabilityCapabilityDetail` | textarea | yes, when category 4 is selected | 1400 |
+| `FOS_VULNERABILITY_CAPABILITY_DETAIL` | `fosVulnerabilityCapabilityDetailDeclined` | checkbox | no | boolean; mutually exclusive with the text |
 | `FOS_COURT_ACTION` | `fosCourtAction` | radio Yes/No | yes | — |
 | `FOS_LENDING_START` | `fosLendingStart` | date | yes, unless the client does not know it | real past date, ≥ 1900, not future |
 | `FOS_LENDING_START` | `fosLendingStartUnknown` | checkbox “I don't remember the exact date” | no | boolean; mutually exclusive with the date |
@@ -113,9 +118,38 @@ form. Omitted entirely in `FOS_ONLY`.
 "None of these apply" is mutually exclusive with the other four, enforced in the
 browser **and** on the server.
 
-Selecting a category opens the approved follow-up below, which the client
-answers either in their own words or by declining. The source PDF's own
-optional "anything else" box stays optional and is never made mandatory.
+Each of the four substantive categories carries **its own** follow-up, revealed
+directly beneath that category:
+
+> Please list any issues and tell us about how they affected you.
+
+with the alternative **I don't remember / prefer not to add details** beneath
+the textarea. Each is answered independently: selecting two categories means
+answering two questions, and explaining one never satisfies the other.
+
+| Category | Block id | Field |
+|---|---|---|
+| 1. health condition | `FOS_VULNERABILITY_HEALTH_DETAIL` | `fosVulnerabilityHealthDetail` |
+| 2. major life change | `FOS_VULNERABILITY_LIFE_EVENT_DETAIL` | `fosVulnerabilityLifeEventDetail` |
+| 3. unexpected changes | `FOS_VULNERABILITY_RESILIENCE_DETAIL` | `fosVulnerabilityResilienceDetail` |
+| 4. extra help needed | `FOS_VULNERABILITY_CAPABILITY_DETAIL` | `fosVulnerabilityCapabilityDetail` |
+
+Unticking a category hides its follow-up and clears both its textarea and its
+alternative flag; a payload still carrying them is rejected server side.
+
+### Removed
+
+Two fields were removed outright and are **no longer accepted** - a payload
+carrying any of them is rejected as an unknown field:
+
+| Removed question | Removed fields |
+|---|---|
+| Please briefly tell us what applied to you. | `fosVulnerabilityExplanation`, `fosVulnerabilityExplanationDeclined` |
+| If there's anything else you'd like to tell us about this, you can do so here | `fosVulnerabilityDetail` |
+
+The first was a single combined explanation covering every selected category;
+the second was the source PDF's own optional free-text box. Both were replaced
+by the per-category follow-ups above.
 
 ### Lending start date
 
@@ -140,7 +174,7 @@ happened. These follow-ups capture the substance.
 
 | Opened by | Follow-up | Alternative |
 |---|---|---|
-| any vulnerability category selected | Please briefly tell us what applied to you. | I don't remember / prefer not to add details |
+| each selected category, separately | Please list any issues and tell us about how they affected you. | I don't remember / prefer not to add details |
 | savings = Yes | Approximately how much did you have in savings? | I don't remember |
 | dependants = Yes | How many dependants did you have? | I don't remember |
 | further lending = Yes | What type of further lending did you apply for? | I don't remember |
@@ -156,8 +190,8 @@ Rules, enforced in the browser **and** on the server:
   supplied, never both and never neither.
 - **Each further-lending answer is independent.** Knowing the lender but not the
   amount is an ordinary answer; one gap never forces the others.
-- **One explanation covers every vulnerability category.** The client is never
-  asked to explain each one separately.
+- **Each selected circumstance is explained separately.** The record shows which
+  explanation belongs to which circumstance, which one combined answer could not.
 - An alternative is a real answer: it is recorded as itself, never as a blank,
   a zero or `Not provided`.
 
@@ -188,7 +222,7 @@ Input accepts `£`, thousands separators and spaces. Stored canonically
 - Admin fields collected by staff: **5** (FOS-only) / **7** (combined)
 - Time-Bar question blocks: **14**; Time-Bar accepted keys: **16** (combined only,
   the 14 answers plus `communicationEvent` and `communicationDate`)
-- FOS question blocks: **18**; FOS accepted keys: **31**
+- FOS question blocks: **20**; FOS accepted keys: **36**
 - Common keys (matter details, token, confirmation, bot controls): **9**
-- **Total accepted keys: 40 (FOS-only) / 56 (combined).** Anything else is
+- **Total accepted keys: 45 (FOS-only) / 61 (combined).** Anything else is
   rejected as an unknown field.

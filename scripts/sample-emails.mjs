@@ -4,15 +4,16 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { buildEmail } = require('../lib/email-template.js');
-const { VULNERABILITY_VALUES } = require('../lib/questions-fos.js');
+const { VULNERABILITY_VALUES, VULNERABILITY_DETAILS } = require('../lib/questions-fos.js');
 
 const META = { submissionId: 'SAMPLE-ONLY-NOT-A-REAL-SUBMISSION', completedAt: '2026-09-15T14:32:07+01:00' };
 
 const FOS = {
   clientName: 'Alex Sample', reference: '200000001', lender: 'Example Bank plc', product: 'Credit card',
-  fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[2]],
-  fosVulnerabilityExplanation: 'I was signed off work for several months with a health condition, and money was very tight the whole time.',
-  fosVulnerabilityDetail: 'I found the paperwork hard to follow.',
+  fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[1]],
+  // One explanation per selected circumstance, each answered on its own terms.
+  [VULNERABILITY_DETAILS[0].field]: 'A long-term health condition meant I was signed off work for several months and could not keep on top of the paperwork.',
+  [VULNERABILITY_DETAILS[1].declinedField]: true,
   fosCourtAction: 'No',
   fosLendingStart: '2016-04-18',
   fosLendingStartUnknown: false,
@@ -56,7 +57,6 @@ const out = [
     fosLendingStart: '', fosLendingStartUnknown: true,
     fosSavingsAmount: '', fosSavingsAmountUnknown: true,
     fosDependantsCount: '', fosDependantsCountUnknown: true,
-    fosVulnerabilityExplanation: '', fosVulnerabilityExplanationDeclined: true
   }]
 ];
 for (const [name, data] of out) {

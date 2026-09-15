@@ -13,7 +13,7 @@ process.env.MAIL_MODE = 'fake';
 const { csrfCookieValue } = require('../lib/security');
 const { encryptPrefill } = require('../lib/prefill');
 const { MODE_FOS_ONLY, MODE_TIMEBAR_AND_FOS } = require('../lib/questions');
-const { VULNERABILITY_VALUES } = require('../lib/questions-fos');
+const { VULNERABILITY_VALUES, VULNERABILITY_DETAILS } = require('../lib/questions-fos');
 const handler = require('../api/submit');
 
 const CSRF = 'test-csrf-token';
@@ -50,7 +50,7 @@ const MATTER_COMBINED = { ...MATTER_FOS, mode: MODE_TIMEBAR_AND_FOS, communicati
 
 const FOS_ANSWERS = {
   fosVulnerabilities: [VULNERABILITY_VALUES[0]],
-  fosVulnerabilityExplanation: 'Synthetic explanation.', fosVulnerabilityDetail: '',
+  [VULNERABILITY_DETAILS[0].field]: 'Synthetic explanation.',
   fosCourtAction: 'No', fosLendingStart: '2015-06-01', fosLendingAmount: '5000', fosBalancesPaid: 'Yes',
   fosIncomeEmployment: '1500', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
   fosSavings: 'No',

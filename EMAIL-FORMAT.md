@@ -148,7 +148,10 @@ approved question:
 
 | Block id | Question | Opened by |
 |---|---|---|
-| `FOS_VULNERABILITY_EXPLANATION` | Please briefly tell us what applied to you. | any vulnerability category selected |
+| `FOS_VULNERABILITY_HEALTH_DETAIL` | Please list any issues and tell us about how they affected you. | category 1 selected |
+| `FOS_VULNERABILITY_LIFE_EVENT_DETAIL` | Please list any issues and tell us about how they affected you. | category 2 selected |
+| `FOS_VULNERABILITY_RESILIENCE_DETAIL` | Please list any issues and tell us about how they affected you. | category 3 selected |
+| `FOS_VULNERABILITY_CAPABILITY_DETAIL` | Please list any issues and tell us about how they affected you. | category 4 selected |
 | `FOS_SAVINGS_AMOUNT` | Approximately how much did you have in savings? | savings = Yes |
 | `FOS_DEPENDANTS_COUNT` | How many dependants did you have? | dependants = Yes |
 | `FOS_FURTHER_LENDING_TYPE` | What type of further lending did you apply for? | further lending = Yes |
@@ -158,9 +161,6 @@ approved question:
 When a branch was not taken its block is **absent from the record entirely** -
 not present-but-blank. A parser should treat a missing block as "the client was
 never asked", which is different from "the client did not answer".
-
-`FOS_VULNERABILITY_DETAIL` is unrelated: it is the source PDF's own optional
-free-text question and is always present.
 
 ### Explicit alternatives
 
@@ -176,8 +176,8 @@ CLIENT ANSWER:
 ```
 
 Never as `Not provided`, never as a blank, and never as a fabricated `£0` or
-`0`. The approved wording is `I don't remember` for every follow-up except the
-vulnerability explanation, which uses
+`0`. The approved wording is `I don't remember` for every follow-up except the four
+circumstance follow-ups, which use
 `I don't remember / prefer not to add details`, and the lending start date, which
 uses `I don't remember the exact date`.
 

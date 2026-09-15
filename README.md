@@ -42,7 +42,7 @@ marker is source wording and must not be edited.
 
    | Opened by | Follow-up |
    |---|---|
-   | any vulnerability category | Please briefly tell us what applied to you. |
+   | each selected circumstance, separately | Please list any issues and tell us about how they affected you. |
    | savings = Yes | Approximately how much did you have in savings? |
    | dependants = Yes | How many dependants did you have? |
    | further lending = Yes | What type of further lending did you apply for? |
@@ -57,6 +57,13 @@ marker is source wording and must not be edited.
 
    The approved set of alternatives is fixed, and a test fails the build if one
    is added, removed or reworded.
+
+4. **Each circumstance is explained separately.** The four substantive
+   categories each carry their own follow-up, revealed beneath that category
+   and answered independently, so the record shows which explanation belongs to
+   which circumstance. This replaced a single combined explanation and the
+   source PDF's own optional "anything else" box; both were removed and their
+   fields are no longer accepted.
 
 ---
 

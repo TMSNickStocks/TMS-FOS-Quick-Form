@@ -7,14 +7,14 @@ const {
 } = require('../lib/email-template');
 const { MODE_FOS_ONLY, MODE_TIMEBAR_AND_FOS, CONFIRMATION_STATEMENT, adminFields } = require('../lib/questions');
 const { TIMEBAR_QUESTIONS } = require('../lib/questions-timebar');
-const { FOS_QUESTIONS, VULNERABILITY_VALUES, VULNERABILITY_NONE, INCOME_ROWS, OUTGOING_ROWS } = require('../lib/questions-fos');
+const { FOS_QUESTIONS, VULNERABILITY_VALUES, VULNERABILITY_NONE, VULNERABILITY_DETAILS, INCOME_ROWS, OUTGOING_ROWS } = require('../lib/questions-fos');
 
 const FOS_BASE = {
   mode: MODE_FOS_ONLY,
   clientName: 'Test Person', reference: '200000001', lender: 'Test Lender', product: 'Credit card',
   fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[2]],
-  fosVulnerabilityExplanation: 'Synthetic combined explanation.',
-  fosVulnerabilityDetail: 'Synthetic extra detail.',
+  [VULNERABILITY_DETAILS[0].field]: 'Synthetic health explanation.',
+  [VULNERABILITY_DETAILS[2].field]: 'Synthetic resilience explanation.',
   fosCourtAction: 'No',
   fosLendingStart: '2015-06-01',
   fosLendingAmount: '5000',
@@ -277,12 +277,18 @@ test('the example lists are not dumped into the record, but their availability i
   assert.equal(b.optionsNote.join('\n'), EXAMPLES_NOTE, 'the record states that examples were available behind the control');
 });
 
-test('the vulnerability free-text answer reproduces its exact question', () => {
-  const b = parse(fosOnly().text).byId.FOS_VULNERABILITY_DETAIL;
-  assert.equal(b.question.join('\n'), approvedFos('FOS_VULNERABILITY_DETAIL').question);
-  assert.equal(b.answer.join('\n'), 'Synthetic extra detail.');
-  const blank = parse(fosOnly({ fosVulnerabilityDetail: '' }).text).byId.FOS_VULNERABILITY_DETAIL;
-  assert.equal(blank.answer.join('\n'), NOT_PROVIDED);
+test('each selected category has its own block, naming the circumstance it explains', () => {
+  const { byId } = parse(fosOnly().text);
+  const health = byId[VULNERABILITY_DETAILS[0].id];
+  const resilience = byId[VULNERABILITY_DETAILS[2].id];
+  assert.equal(health.context.join('\n'), VULNERABILITY_VALUES[0], 'the block states which circumstance it belongs to');
+  assert.equal(health.question.join('\n'), approvedFos(VULNERABILITY_DETAILS[0].id).question);
+  assert.equal(health.answer.join('\n'), 'Synthetic health explanation.');
+  assert.equal(resilience.context.join('\n'), VULNERABILITY_VALUES[2]);
+  assert.equal(resilience.answer.join('\n'), 'Synthetic resilience explanation.');
+  // Categories that were not selected produce no block at all.
+  assert.equal(byId[VULNERABILITY_DETAILS[1].id], undefined);
+  assert.equal(byId[VULNERABILITY_DETAILS[3].id], undefined);
 });
 
 // --------------------------------------------------------- financial output

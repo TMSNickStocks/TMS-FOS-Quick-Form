@@ -12,14 +12,26 @@ const fs = require('node:fs');
 const { validateSubmission, MODE_FOS_ONLY, MODE_TIMEBAR_AND_FOS } = require('../lib/validation');
 const { buildEmail, esc, NOT_PROVIDED } = require('../lib/email-template');
 const {
-  FOS_QUESTIONS, VULNERABILITY_VALUES, VULNERABILITY_NONE,
-  UNKNOWN_LABEL, VULNERABILITY_DECLINE_LABEL
+  FOS_QUESTIONS, VULNERABILITY_VALUES, VULNERABILITY_NONE, VULNERABILITY_DETAILS,
+  VULNERABILITY_DETAIL_QUESTION, UNKNOWN_LABEL, VULNERABILITY_DECLINE_LABEL
 } = require('../lib/questions-fos');
 
 const html = fs.readFileSync('public/index.html', 'utf8');
 const app = fs.readFileSync('public/app.js', 'utf8');
 
 const CAT = VULNERABILITY_VALUES;
+const DET = VULNERABILITY_DETAILS;
+// Select the given categories and answer each, so a test only has to say which
+// categories it cares about. Pass 'decline' to use the alternative instead.
+const withCategories = (indexes, answers = {}) => {
+  const over = { fosVulnerabilities: indexes.map((i) => CAT[i]) };
+  indexes.forEach((i) => {
+    if (answers[i] === 'decline') over[DET[i].declinedField] = true;
+    else if (answers[i] === undefined) over[DET[i].field] = `Explanation for category ${i + 1}.`;
+    else over[DET[i].field] = answers[i];
+  });
+  return over;
+};
 
 // A submission with every branch closed: "none of these apply", and No to
 // savings, dependants and further lending. Each test opens only what it needs.
@@ -57,15 +69,16 @@ function block(text, id) {
   const lines = text.split('\n');
   const start = lines.findIndex((l) => l.startsWith(`[${id}]`));
   if (start < 0) return null;
-  const out = { id, question: [], answer: [], options: [] };
+  const out = { id, context: [], question: [], answer: [], options: [] };
   let marker = null;
   for (let i = start + 1; i < lines.length; i += 1) {
     const line = lines[i];
     if (/^\[[A-Z0-9_]+\]/.test(line)) break;
-    const mk = /^(QUESTION|NOTE|OPTIONS|CLIENT ANSWER):$/.exec(line);
+    const mk = /^(CONTEXT|QUESTION|NOTE|OPTIONS|CLIENT ANSWER):$/.exec(line);
     if (mk) { marker = mk[1]; continue; }
     if (!/^ {2}/.test(line)) { marker = null; continue; }
     const content = line.slice(2);
+    if (marker === 'CONTEXT') out.context.push(content);
     if (marker === 'QUESTION') out.question.push(content);
     if (marker === 'OPTIONS' && content.startsWith('• ')) out.options.push(content.slice(2));
     if (marker === 'CLIENT ANSWER') out.answer.push(content);
@@ -75,86 +88,171 @@ function block(text, id) {
 const answerOf = (text, id) => { const b = block(text, id); return b ? b.answer.join('\n') : null; };
 const questionOf = (text, id) => { const b = block(text, id); return b ? b.question.join('\n') : null; };
 
-// ============================ 1. multiple categories preserved ============
+// ============ 1-4. circumstances, each answered on its own terms ==========
 
-test('1. every selected vulnerability category is preserved individually', () => {
-  const four = CAT.slice(0, 4);
-  const r = valid({ fosVulnerabilities: four, fosVulnerabilityExplanation: 'All four applied.' });
-  assert.deepEqual(r.value.fosVulnerabilities, four, 'all four survive validation, in questionnaire order');
-
-  const { text } = record({ fosVulnerabilities: four, fosVulnerabilityExplanation: 'All four applied.' });
-  const answer = answerOf(text, 'FOS_VULNERABILITY');
-  for (const c of four) {
-    assert.ok(answer.includes(`SELECTED: ${c}`), `record must name ${c.slice(0, 40)} individually`);
-  }
-  assert.ok(answer.includes(`not selected: ${VULNERABILITY_NONE}`));
-  // Not collapsed into one generic answer.
-  assert.equal(answer.split('\n').length, 5, 'one line per option, never merged');
+test('1. one selected category, answered in the client own words', () => {
+  const { text } = record(withCategories([0], { 0: 'My illness made letters impossible.' }));
+  const b = block(text, DET[0].id);
+  assert.equal(b.id, 'FOS_VULNERABILITY_HEALTH_DETAIL');
+  assert.equal(questionOf(text, DET[0].id), VULNERABILITY_DETAIL_QUESTION);
+  assert.equal(answerOf(text, DET[0].id), 'My illness made letters impossible.');
+  // The other three were never asked.
+  for (const d of DET.slice(1)) assert.equal(block(text, d.id), null, `${d.id} must not appear`);
 });
 
-test('1b. two categories out of four are each named, and the rest marked not selected', () => {
-  const { text } = record({ fosVulnerabilities: [CAT[1], CAT[3]], fosVulnerabilityExplanation: 'Two applied.' });
+test('2. one selected category, answered with the decline alternative', () => {
+  const { text, html: htmlPart } = record(withCategories([1], { 1: 'decline' }));
+  assert.equal(answerOf(text, DET[1].id), VULNERABILITY_DECLINE_LABEL);
+  assert.ok(!answerOf(text, DET[1].id).includes(NOT_PROVIDED), 'never recorded as a blank');
+  assert.ok(htmlPart.includes(esc(VULNERABILITY_DECLINE_LABEL)));
+});
+
+test('3. two selected categories keep separate explanations', () => {
+  const { text } = record(withCategories([0, 1], {
+    0: 'Health: I was signed off work.',
+    1: 'Life event: my mother died.'
+  }));
+  assert.equal(answerOf(text, DET[0].id), 'Health: I was signed off work.');
+  assert.equal(answerOf(text, DET[1].id), 'Life event: my mother died.');
+  // Each block names the circumstance its answer belongs to, so two answers
+  // can never be read as one combined explanation.
+  assert.equal(block(text, DET[0].id).context.join('\n'), CAT[0]);
+  assert.equal(block(text, DET[1].id).context.join('\n'), CAT[1]);
+  assert.notEqual(answerOf(text, DET[0].id), answerOf(text, DET[1].id));
+});
+
+test('4. a mixed case: one explained, one declined', () => {
+  const { text } = record(withCategories([0, 2], { 0: 'Health explanation.', 2: 'decline' }));
+  assert.equal(answerOf(text, DET[0].id), 'Health explanation.');
+  assert.equal(answerOf(text, DET[2].id), VULNERABILITY_DECLINE_LABEL);
+  assert.equal(block(text, DET[1].id), null);
+  assert.equal(block(text, DET[3].id), null);
+});
+
+test('5. all four selected, each answered independently', () => {
+  const answers = { 0: 'One.', 1: 'decline', 2: 'Three.', 3: 'Four.' };
+  const r = valid(withCategories([0, 1, 2, 3], answers));
+  assert.deepEqual(r.value.fosVulnerabilities, CAT.slice(0, 4), 'every category preserved, in order');
+
+  const { text } = record(withCategories([0, 1, 2, 3], answers));
+  assert.equal(answerOf(text, DET[0].id), 'One.');
+  assert.equal(answerOf(text, DET[1].id), VULNERABILITY_DECLINE_LABEL);
+  assert.equal(answerOf(text, DET[2].id), 'Three.');
+  assert.equal(answerOf(text, DET[3].id), 'Four.');
+  // Four separate blocks, each naming its own circumstance.
+  DET.forEach((d, i) => assert.equal(block(text, d.id).context.join('\n'), CAT[i]));
+});
+
+test('5b. the selection block still names every category as selected or not', () => {
+  const { text } = record(withCategories([1, 3]));
   const answer = answerOf(text, 'FOS_VULNERABILITY');
   assert.ok(answer.includes(`SELECTED: ${CAT[1]}`));
   assert.ok(answer.includes(`SELECTED: ${CAT[3]}`));
   assert.ok(answer.includes(`not selected: ${CAT[0]}`));
   assert.ok(answer.includes(`not selected: ${CAT[2]}`));
+  assert.ok(answer.includes(`not selected: ${VULNERABILITY_NONE}`));
+  assert.equal(answer.split('\n').length, 5, 'one line per option, never merged');
 });
 
-// ============================ 2-3. explanation and decline ================
-
-test('2. a free-text explanation is required once a category is selected, and recorded', () => {
-  assert.ok(invalid({ fosVulnerabilities: [CAT[0]] }).fosVulnerabilityExplanation, 'neither answer given');
-  const { text } = record({ fosVulnerabilities: [CAT[0]], fosVulnerabilityExplanation: 'I was unwell for months.' });
-  assert.equal(questionOf(text, 'FOS_VULNERABILITY_EXPLANATION'), 'Please briefly tell us what applied to you.');
-  assert.equal(answerOf(text, 'FOS_VULNERABILITY_EXPLANATION'), 'I was unwell for months.');
+test('6. a selected category must be answered one way or the other, never both', () => {
+  for (let i = 0; i < 4; i += 1) {
+    const chosen = { fosVulnerabilities: [CAT[i]] };
+    assert.ok(validateSubmission(sub(chosen)).errors[DET[i].field], `${DET[i].id}: neither answer given`);
+    assert.match(
+      invalid({ ...chosen, [DET[i].field]: 'x', [DET[i].declinedField]: true })[DET[i].field],
+      /not both/,
+      `${DET[i].id}: both answers given`
+    );
+  }
 });
 
-test('3. the decline alternative is accepted and recorded as itself', () => {
-  const { text, html: htmlPart } = record({ fosVulnerabilities: [CAT[0], CAT[1]], fosVulnerabilityExplanationDeclined: true });
-  assert.equal(answerOf(text, 'FOS_VULNERABILITY_EXPLANATION'), VULNERABILITY_DECLINE_LABEL);
-  assert.ok(!answerOf(text, 'FOS_VULNERABILITY_EXPLANATION').includes(NOT_PROVIDED), 'never recorded as a blank');
-  // The label carries an apostrophe, so the HTML part escapes it. Compare the
-  // escaped form rather than asserting the raw string is present unescaped.
-  assert.ok(htmlPart.includes(esc(VULNERABILITY_DECLINE_LABEL)));
-  assert.ok(!htmlPart.includes(VULNERABILITY_DECLINE_LABEL), 'the raw apostrophe never reaches the HTML unescaped');
+test('7. unticking a category makes its answer inadmissible', () => {
+  // Health selected, but a life-event answer left behind.
+  const stale = invalid({ ...withCategories([0]), [DET[1].field]: 'stale text' });
+  assert.equal(stale[DET[1].field], 'This question was not asked');
+  const staleFlag = invalid({ ...withCategories([0]), [DET[1].declinedField]: true });
+  assert.equal(staleFlag[DET[1].field], 'This question was not asked');
 });
 
-test('3b. text and the decline alternative are mutually exclusive', () => {
-  const errors = invalid({ fosVulnerabilities: [CAT[0]], fosVulnerabilityExplanation: 'x', fosVulnerabilityExplanationDeclined: true });
-  assert.match(errors.fosVulnerabilityExplanation, /not both/);
+test('8. "None of these apply" clears every category follow-up', () => {
+  const r = valid({ fosVulnerabilities: [VULNERABILITY_NONE] });
+  for (const d of DET) {
+    assert.equal(r.value[d.field], '', `${d.field} empty`);
+    assert.equal(r.value[d.declinedField], false, `${d.declinedField} false`);
+  }
+  const { text } = record({ fosVulnerabilities: [VULNERABILITY_NONE] });
+  for (const d of DET) assert.equal(block(text, d.id), null, `${d.id} must not appear`);
+  assert.ok(answerOf(text, 'FOS_VULNERABILITY').includes(`SELECTED: ${VULNERABILITY_NONE}`),
+    'the "none" answer is stated explicitly');
 });
 
-test('3c. one explanation covers every selected category - none is asked for separately', () => {
-  valid({ fosVulnerabilities: CAT.slice(0, 4), fosVulnerabilityExplanation: 'One combined answer.' });
-  const explanationBlocks = FOS_QUESTIONS.filter((q) => q.id.startsWith('FOS_VULNERABILITY_EXPLANATION'));
-  assert.equal(explanationBlocks.length, 1, 'exactly one explanation question exists');
+test('8b. a detail supplied against "None of these apply" is rejected', () => {
+  for (const d of DET) {
+    assert.equal(invalid({ [d.field]: 'smuggled' })[d.field], 'This question was not asked');
+    assert.equal(invalid({ [d.declinedField]: true })[d.field], 'This question was not asked');
+  }
 });
 
-// ============================ 4. None-of-these exclusivity ================
-
-test('4. "None of these apply" cannot be combined with a category', () => {
+test('9. "None of these apply" cannot be combined with a category', () => {
   for (let i = 0; i < 4; i += 1) {
     const errors = invalid({ fosVulnerabilities: [CAT[i], VULNERABILITY_NONE] });
     assert.match(errors.fosVulnerabilities, /None of these apply/);
   }
 });
 
-test('4b. "None of these apply" alone closes the explanation follow-up', () => {
-  const r = valid({ fosVulnerabilities: [VULNERABILITY_NONE] });
-  assert.equal(r.value.fosVulnerabilityExplanation, '');
-  assert.equal(r.value.fosVulnerabilityExplanationDeclined, false);
-  const { text } = record({ fosVulnerabilities: [VULNERABILITY_NONE] });
-  assert.equal(block(text, 'FOS_VULNERABILITY_EXPLANATION'), null, 'the follow-up is not in the record at all');
-  assert.equal(answerOf(text, 'FOS_VULNERABILITY'), [
-    ...CAT.slice(0, 4).map((c) => `not selected: ${c}`),
-    `SELECTED: ${VULNERABILITY_NONE}`
-  ].join('\n'));
+test('9b. stale values are forced empty, so nothing can leak into the record', () => {
+  const r = validateSubmission(sub({ ...withCategories([0]), [DET[1].field]: 'stale text' }));
+  assert.equal(r.value[DET[1].field], '');
+  assert.equal(r.value[DET[1].declinedField], false);
 });
 
-test('4c. an explanation supplied against "None of these apply" is rejected', () => {
-  assert.equal(invalid({ fosVulnerabilityExplanation: 'smuggled' }).fosVulnerabilityExplanation, 'This question was not asked');
-  assert.equal(invalid({ fosVulnerabilityExplanationDeclined: true }).fosVulnerabilityExplanation, 'This question was not asked');
+// ============ 10. the removed combined fields =============================
+
+test('10. the removed combined vulnerability fields are rejected as unknown', () => {
+  const removed = ['fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined', 'fosVulnerabilityDetail'];
+  for (const field of removed) {
+    const r = validateSubmission(sub({ ...withCategories([0]), [field]: 'x' }));
+    assert.equal(r.errors._form, 'Unknown field', `${field} must be rejected`);
+  }
+});
+
+test('10b. the removed questions appear nowhere in the app', () => {
+  const gone = [
+    'Please briefly tell us what applied to you.',
+    'anything else you’d like to tell us about this',
+    // Bare field names: any surviving reference at all, not just a quoted one.
+    // An earlier version of this list matched only `fosVulnerabilityDetail"`
+    // and so missed a dead validator entry that used `fosVulnerabilityDetail:`.
+    'fosVulnerabilityExplanation',
+    'fosVulnerabilityDetail'
+  ];
+  // Checked against what actually runs. Comments are stripped first, because
+  // the code deliberately names these fields where it explains why they are no
+  // longer accepted, and that explanation is worth keeping.
+  const stripComments = (src) => src
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+  const sources = {
+    'public/index.html': html,
+    'public/app.js': app,
+    'lib/questions-fos.js': fs.readFileSync('lib/questions-fos.js', 'utf8'),
+    'lib/validation.js': fs.readFileSync('lib/validation.js', 'utf8')
+  };
+  for (const [name, source] of Object.entries(sources)) {
+    const live = stripComments(source);
+    for (const phrase of gone) {
+      assert.ok(!live.includes(phrase), `${name} still references: ${phrase}`);
+    }
+  }
+  // No block id survives for either, and neither field is accepted.
+  const ids = FOS_QUESTIONS.map((q) => q.id);
+  assert.ok(!ids.includes('FOS_VULNERABILITY_EXPLANATION'));
+  assert.ok(!ids.includes('FOS_VULNERABILITY_DETAIL'));
+  const { FOS_FIELDS } = require('../lib/validation');
+  for (const f of ['fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined', 'fosVulnerabilityDetail']) {
+    assert.ok(!FOS_FIELDS.includes(f), `${f} must not be an accepted field`);
+  }
 });
 
 // ============================ 5-7. savings ================================
@@ -296,7 +394,7 @@ test('14. the review screen renders every conditional answer', () => {
   // follow-up question appears, gated on the answer that opens it, and each
   // reads its own alternative flag.
   const expectations = [
-    ["'Please briefly tell us what applied to you.'", 'fosVulnerabilityExplanationDeclined'],
+    ['VULNERABILITY_DETAIL_QUESTION', 'VULNERABILITY_DETAILS'],
     ["'Approximately how much did you have in savings?'", 'fosSavingsAmountUnknown'],
     ["'How many dependants did you have?'", 'fosDependantsCountUnknown'],
     ["'What type of further lending did you apply for?'", 'fosFurtherLendingTypeUnknown'],
@@ -308,6 +406,7 @@ test('14. the review screen renders every conditional answer', () => {
     assert.ok(review.includes(question), `review must show ${question}`);
     assert.ok(review.includes(flag), `review must read ${flag}`);
   }
+  assert.ok(review.includes('d.fosVulnerabilities.includes(category)'), 'each category row is gated on that category');
   assert.ok(review.includes("d.fosSavings === 'Yes'"), 'savings follow-up gated on Yes');
   assert.ok(review.includes("d.fosDependants === 'Yes'"), 'dependants follow-up gated on Yes');
   assert.ok(review.includes("d.fosFurtherLending === 'Yes'"), 'further lending follow-ups gated on Yes');
@@ -323,7 +422,6 @@ test('14b. selected categories reach the review as a list, not one merged string
 test('14c. every field the form collects is sent, so nothing can silently vanish', () => {
   const collect = app.slice(app.indexOf('function collect()'), app.indexOf('function renderReview'));
   const newFields = [
-    'fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined',
     'fosSavingsAmount', 'fosSavingsAmountUnknown',
     'fosDependantsCount', 'fosDependantsCountUnknown',
     'fosFurtherLendingType', 'fosFurtherLendingTypeUnknown',
@@ -331,19 +429,20 @@ test('14c. every field the form collects is sent, so nothing can silently vanish
     'fosFurtherLendingAmount', 'fosFurtherLendingAmountUnknown'
   ];
   for (const f of newFields) assert.ok(collect.includes(f), `collect() must send ${f}`);
+  assert.ok(collect.includes('VULNERABILITY_DETAILS.forEach'), 'the four category details are collected too');
 });
 
 // ============================ 15-16. email record =========================
 
 test('15. every conditional answer is reproduced in the record when its branch is open', () => {
   const { text } = record({
-    fosVulnerabilities: [CAT[0], CAT[2]], fosVulnerabilityExplanation: 'Health and money.',
+    ...withCategories([0, 2], { 0: 'Health and money.', 2: 'decline' }),
     fosSavings: 'Yes', fosSavingsAmount: '800',
     fosDependants: 'Yes', fosDependantsCount: '2',
     ...FURTHER_ALL
   });
   const expected = {
-    FOS_VULNERABILITY_EXPLANATION: 'Health and money.',
+    FOS_VULNERABILITY_HEALTH_DETAIL: 'Health and money.',
     FOS_SAVINGS_AMOUNT: '£800.00 [value: 800]',
     FOS_DEPENDANTS_COUNT: '2',
     FOS_FURTHER_LENDING_TYPE: 'Credit card',
@@ -357,14 +456,14 @@ test('15. every conditional answer is reproduced in the record when its branch i
 
 test('16. the full question is reproduced immediately before every new answer', () => {
   const { text } = record({
-    fosVulnerabilities: [CAT[0]], fosVulnerabilityExplanation: 'x',
+    ...withCategories([0], { 0: 'x' }),
     fosSavings: 'Yes', fosSavingsAmountUnknown: true,
     fosDependants: 'Yes', fosDependantsCountUnknown: true,
     ...FURTHER_ALL
   });
   const lines = text.split('\n');
   const ids = [
-    'FOS_VULNERABILITY_EXPLANATION', 'FOS_SAVINGS_AMOUNT', 'FOS_DEPENDANTS_COUNT',
+    'FOS_VULNERABILITY_HEALTH_DETAIL', 'FOS_SAVINGS_AMOUNT', 'FOS_DEPENDANTS_COUNT',
     'FOS_FURTHER_LENDING_TYPE', 'FOS_FURTHER_LENDING_LENDER', 'FOS_FURTHER_LENDING_AMOUNT'
   ];
   for (const id of ids) {
@@ -378,18 +477,29 @@ test('16. the full question is reproduced immediately before every new answer', 
 });
 
 test('16b. the new ids are stable and machine-readable', () => {
-  const NEW = [
-    'FOS_VULNERABILITY_EXPLANATION', 'FOS_SAVINGS_AMOUNT', 'FOS_DEPENDANTS_COUNT',
+  const NEW = DET.map((d) => d.id).concat([
+    'FOS_SAVINGS_AMOUNT', 'FOS_DEPENDANTS_COUNT',
     'FOS_FURTHER_LENDING_TYPE', 'FOS_FURTHER_LENDING_LENDER', 'FOS_FURTHER_LENDING_AMOUNT'
-  ];
+  ]);
   const ids = FOS_QUESTIONS.map((q) => q.id);
   for (const id of NEW) {
     assert.ok(ids.includes(id), `${id} exists`);
     assert.match(id, /^[A-Z0-9_]+$/);
   }
-  // The source PDF's own free-text question keeps its original id, so that id
-  // still means what it meant in every record already sent.
-  assert.ok(ids.includes('FOS_VULNERABILITY_DETAIL'));
+  // One id per category, matching the field names it drives.
+  assert.deepEqual(DET.map((d) => d.id), [
+    'FOS_VULNERABILITY_HEALTH_DETAIL',
+    'FOS_VULNERABILITY_LIFE_EVENT_DETAIL',
+    'FOS_VULNERABILITY_RESILIENCE_DETAIL',
+    'FOS_VULNERABILITY_CAPABILITY_DETAIL'
+  ]);
+  assert.deepEqual(DET.map((d) => d.field), [
+    'fosVulnerabilityHealthDetail',
+    'fosVulnerabilityLifeEventDetail',
+    'fosVulnerabilityResilienceDetail',
+    'fosVulnerabilityCapabilityDetail'
+  ]);
+  assert.deepEqual(DET.map((d) => d.declinedField), DET.map((d) => `${d.field}Declined`));
   assert.equal(new Set(ids).size, ids.length, 'ids stay unique');
 });
 
@@ -439,12 +549,15 @@ test('17c. unknown fields are still rejected outright', () => {
 });
 
 test('17d. the alternative flags must be real booleans', () => {
-  const flags = [
-    'fosVulnerabilityExplanationDeclined', 'fosSavingsAmountUnknown', 'fosDependantsCountUnknown',
+  const flags = DET.map((d) => d.declinedField).concat([
+    'fosSavingsAmountUnknown', 'fosDependantsCountUnknown',
     'fosFurtherLendingTypeUnknown', 'fosFurtherLendingLenderUnknown', 'fosFurtherLendingAmountUnknown'
-  ];
+  ]);
   for (const flag of flags) {
-    const r = validateSubmission(sub({ [flag]: 'yes' }));
+    // A category flag is only reachable once that category is selected.
+    const detail = DET.find((d) => d.declinedField === flag);
+    const open = detail ? { fosVulnerabilities: [detail.category], [detail.field]: 'x' } : {};
+    const r = validateSubmission(sub({ ...open, [flag]: 'yes' }));
     assert.equal(r.errors[flag], 'Invalid choice', `${flag} must reject a string`);
   }
 });
@@ -454,10 +567,10 @@ test('17d. the alternative flags must be real booleans', () => {
 test('18. no follow-up answer can reach a log', () => {
   const sources = ['api/submit.js', 'lib/validation.js', 'lib/email-template.js', 'lib/questions-fos.js']
     .map((f) => fs.readFileSync(f, 'utf8'));
-  const forbidden = [
-    'fosVulnerabilityExplanation', 'fosSavingsAmount', 'fosDependantsCount',
+  const forbidden = DET.map((d) => d.field).concat([
+    'fosSavingsAmount', 'fosDependantsCount',
     'fosFurtherLendingType', 'fosFurtherLendingLender', 'fosFurtherLendingAmount'
-  ];
+  ]);
   for (const source of sources) {
     const calls = source.match(/console\s*\.\s*\w+\s*\([\s\S]*?\)/g) || [];
     for (const call of calls) {
@@ -472,7 +585,7 @@ test('18. no follow-up answer can reach a log', () => {
 
 test('19. both questionnaire modes accept the follow-ups', () => {
   const answers = {
-    fosVulnerabilities: [CAT[0]], fosVulnerabilityExplanation: 'Health.',
+    ...withCategories([0, 1], { 0: 'Health.', 1: 'decline' }),
     fosSavings: 'Yes', fosSavingsAmount: '800',
     fosDependants: 'Yes', fosDependantsCountUnknown: true,
     ...FURTHER_ALL
@@ -486,7 +599,7 @@ test('19. both questionnaire modes accept the follow-ups', () => {
   // The combined record carries the Time-Bar section and every FOS follow-up.
   const rec = buildEmail(both.value, { submissionId: 'test', completedAt: '2026-09-15T12:00:00+01:00' });
   assert.ok(rec.text.includes('TIME-BAR QUESTIONNAIRE RESPONSES'));
-  for (const id of ['FOS_VULNERABILITY_EXPLANATION', 'FOS_SAVINGS_AMOUNT', 'FOS_DEPENDANTS_COUNT',
+  for (const id of [DET[0].id, DET[1].id, 'FOS_SAVINGS_AMOUNT', 'FOS_DEPENDANTS_COUNT',
     'FOS_FURTHER_LENDING_TYPE', 'FOS_FURTHER_LENDING_LENDER', 'FOS_FURTHER_LENDING_AMOUNT']) {
     assert.ok(block(rec.text, id), `${id} present in the combined record`);
   }
@@ -499,17 +612,20 @@ test('19. both questionnaire modes accept the follow-ups', () => {
 // ============================ form wiring =================================
 
 test('the form offers every follow-up control, hidden until its branch opens', () => {
-  for (const id of ['fosVulnerabilityExplanationBlock', 'fosSavingsAmountBlock', 'fosDependantsCountBlock', 'fosFurtherLendingBlock']) {
+  for (const d of DET) {
+    assert.match(html, new RegExp(`<div id="${d.field}Block" class="conditional category-detail" hidden>`),
+      `${d.field} follow-up starts hidden, beneath its own category`);
+  }
+  for (const id of ['fosSavingsAmountBlock', 'fosDependantsCountBlock', 'fosFurtherLendingBlock']) {
     assert.match(html, new RegExp(`<div id="${id}" class="conditional" hidden>`), `${id} starts hidden`);
   }
-  const controls = [
-    'fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined',
+  const controls = DET.flatMap((d) => [d.field, d.declinedField]).concat([
     'fosSavingsAmount', 'fosSavingsAmountUnknown',
     'fosDependantsCount', 'fosDependantsCountUnknown',
     'fosFurtherLendingType', 'fosFurtherLendingTypeUnknown',
     'fosFurtherLendingLender', 'fosFurtherLendingLenderUnknown',
     'fosFurtherLendingAmount', 'fosFurtherLendingAmountUnknown'
-  ];
+  ]);
   for (const name of controls) assert.ok(html.includes(`name="${name}"`), `${name} control exists`);
 });
 
@@ -523,11 +639,12 @@ test('closing a branch clears the answers inside it', () => {
 test('every value control is paired with its alternative in both directions', () => {
   const pairs = app.slice(app.indexOf('const EITHER_OR'), app.indexOf('const BRANCHES'));
   for (const pair of [
-    'fosVulnerabilityExplanation', 'fosSavingsAmount', 'fosDependantsCount',
+    'fosSavingsAmount', 'fosDependantsCount',
     'fosFurtherLendingType', 'fosFurtherLendingLender', 'fosFurtherLendingAmount'
   ]) {
     assert.ok(pairs.includes(pair), `${pair} is paired with its alternative`);
   }
+  assert.ok(pairs.includes('VULNERABILITY_DETAILS.map'), 'the four category pairs are derived too');
   const fn = app.slice(app.indexOf('function enforceEitherOr'));
   assert.ok(fn.includes("valueEl.value = ''"), 'ticking the alternative clears the value');
   assert.ok(fn.includes('unknownEl.checked = false'), 'entering a value unticks the alternative');

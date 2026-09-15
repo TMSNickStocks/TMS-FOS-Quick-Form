@@ -96,24 +96,26 @@ OPTIONS:
   Each option above except “None of these apply” had a “See examples” control the client could open for examples.
 CLIENT ANSWER:
   SELECTED: A physical or mental health condition which means you find everyday tasks or decision making more difficult
-  not selected: You’ve experienced a major change in your personal life
-  SELECTED: You struggle to deal with unexpected financial or emotional changes
+  SELECTED: You’ve experienced a major change in your personal life
+  not selected: You struggle to deal with unexpected financial or emotional changes
   not selected: You sometimes need extra help to understand information or make decisions
   not selected: None of these apply
 
-[FOS_VULNERABILITY_EXPLANATION]
+[FOS_VULNERABILITY_HEALTH_DETAIL]
+CONTEXT:
+  A physical or mental health condition which means you find everyday tasks or decision making more difficult
 QUESTION:
-  Please briefly tell us what applied to you.
+  Please list any issues and tell us about how they affected you.
+CLIENT ANSWER:
+  A long-term health condition meant I was signed off work for several months and could not keep on top of the paperwork.
+
+[FOS_VULNERABILITY_LIFE_EVENT_DETAIL]
+CONTEXT:
+  You’ve experienced a major change in your personal life
+QUESTION:
+  Please list any issues and tell us about how they affected you.
 CLIENT ANSWER:
   I don't remember / prefer not to add details
-
-[FOS_VULNERABILITY_DETAIL]
-QUESTION:
-  If there’s anything else you’d like to tell us about this, you can do so here
-NOTE:
-  Optional.
-CLIENT ANSWER:
-  I found the paperwork hard to follow.
 
 [FOS_COURT_ACTION] 2. Has there been any court action related to the complaint (or is any planned)?
 QUESTION:

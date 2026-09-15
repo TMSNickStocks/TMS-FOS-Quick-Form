@@ -13,8 +13,8 @@
 | `logging.test.js` | 5 | no `console.*` in `api/` or `lib/` references client data or credentials; submit logs only id, message id, mode, outcome, duration; `lib/mail.js` never logs |
 | `prefill.test.js` | 5 | encryption round trip; tampered token rejected; TTL fallback; finite expiry |
 | `rate-limit.test.js` | 1 | window behaviour |
-| `followups.test.js` | 39 | the follow-ups approved 2026-09-15: multiple vulnerability categories preserved individually; explanation and decline paths; None-of-these exclusivity; savings Yes+amount / Yes+unknown / No; dependants Yes+count / Yes+unknown / No and the 1-or-more rule; further lending with all three answers, mixed known/unknown, and No; review wiring; record output; full question before every answer; **every contradictory payload rejected server-side**; no follow-up answer in logs; both modes |
-| **Total** | **218** | |
+| `followups.test.js` | 45 | the follow-ups approved 2026-09-15: **one follow-up per selected circumstance**, each answered independently (text or decline); two and four categories with separate explanations; mixed explained/declined; unticking clears and invalidates; None-of-these clears all four; **the removed combined fields rejected as unknown and absent from the app**; savings Yes+amount / Yes+unknown / No; dependants Yes+count / Yes+unknown / No and the 1-or-more rule; further lending with all three answers, mixed known/unknown, and No; review wiring; record output; full question before every answer; **every contradictory payload rejected server-side**; no follow-up answer in logs; both modes |
+| **Total** | **224** | |
 
 ## Static checks (`npm run lint`)
 
@@ -48,9 +48,11 @@ Syntax check: 23 files. Credential scan: passed. Typecheck: passed.
 | Submission | both modes returned the success screen |
 | Server log | `requestId`, `messageId`, `mode`, `delivery`, `durationMs` only |
 | 320 / 390 / 430 px | no horizontal scroll at any width |
-| Vulnerability branch | explanation block opens on any category, closes on "None of these apply" |
+| Circumstance branches | each follow-up opens and closes with its own category only; "None of these apply" closes all four |
+| Unticking a category | cleared its textarea and its alternative flag |
+| Independent validation | two categories selected, one answered: blocked with the error on the unanswered one |
 | Explanation exclusivity | typing cleared the decline tick; ticking decline cleared and disabled the text |
 | Follow-up branches | savings / dependants / further lending blocks opened on Yes, each blocking independently until answered |
 | Mixed known/unknown | type and lender entered, amount marked not known - accepted |
-| Review screen | 28 rows, both selected categories as separate list items, every follow-up shown |
+| Review screen | each selected circumstance as its own block: category, follow-up question, answer; removed questions absent |
 | Submission | accepted end to end; log carried only id, message id, mode, outcome, duration |

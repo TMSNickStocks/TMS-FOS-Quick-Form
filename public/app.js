@@ -50,6 +50,15 @@
     ['Fuel or transport costs', 'fosOutTransport']
   ];
   const VULNERABILITY_NONE = 'None of these apply';
+  // Each category, and the follow-up revealed beneath it. Mirrors
+  // VULNERABILITY_DETAILS in lib/questions-fos.js; a test asserts the two agree.
+  const VULNERABILITY_DETAILS = [
+    ['A physical or mental health condition which means you find everyday tasks or decision making more difficult', 'fosVulnerabilityHealthDetail'],
+    ['You’ve experienced a major change in your personal life', 'fosVulnerabilityLifeEventDetail'],
+    ['You struggle to deal with unexpected financial or emotional changes', 'fosVulnerabilityResilienceDetail'],
+    ['You sometimes need extra help to understand information or make decisions', 'fosVulnerabilityCapabilityDetail']
+  ];
+  const VULNERABILITY_DETAIL_QUESTION = 'Please list any issues and tell us about how they affected you.';
   const UNKNOWN_DATE_LABEL = "I don't remember the exact date";
   const UNKNOWN_LABEL = "I don't remember";
   const VULNERABILITY_DECLINE_LABEL = "I don't remember / prefer not to add details";
@@ -60,21 +69,23 @@
   // unticks the alternative. Enforced again on the server.
   const EITHER_OR = [
     ['fosLendingStart', 'fosLendingStartUnknown'],
-    ['fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined'],
     ['fosSavingsAmount', 'fosSavingsAmountUnknown'],
     ['fosDependantsCount', 'fosDependantsCountUnknown'],
     ['fosFurtherLendingType', 'fosFurtherLendingTypeUnknown'],
     ['fosFurtherLendingLender', 'fosFurtherLendingLenderUnknown'],
     ['fosFurtherLendingAmount', 'fosFurtherLendingAmountUnknown']
-  ];
+  ].concat(VULNERABILITY_DETAILS.map(([, f]) => [f, `${f}Declined`]));
 
   // A conditional block, the answer that opens it, and every field inside it.
   // When the branch closes the fields are cleared, so an answer the client
   // changed their mind about can never be submitted against a question they
   // were no longer asked - which the server would reject as contradictory.
-  const BRANCHES = [
-    { block: '#fosVulnerabilityExplanationBlock', open: () => hasVulnerabilityCategory(),
-      fields: ['fosVulnerabilityExplanation'], flags: ['fosVulnerabilityExplanationDeclined'] },
+  const BRANCHES = VULNERABILITY_DETAILS.map(([category, field]) => ({
+    block: `#${field}Block`,
+    open: () => checkedValues('fosVulnerabilities').includes(category),
+    fields: [field],
+    flags: [`${field}Declined`]
+  })).concat([
     { block: '#fosSavingsAmountBlock', open: () => selected('fosSavings') === 'Yes',
       fields: ['fosSavingsAmount'], flags: ['fosSavingsAmountUnknown'] },
     { block: '#fosDependantsCountBlock', open: () => selected('fosDependants') === 'Yes',
@@ -82,7 +93,7 @@
     { block: '#fosFurtherLendingBlock', open: () => selected('fosFurtherLending') === 'Yes',
       fields: ['fosFurtherLendingType', 'fosFurtherLendingLender', 'fosFurtherLendingAmount'],
       flags: ['fosFurtherLendingTypeUnknown', 'fosFurtherLendingLenderUnknown', 'fosFurtherLendingAmountUnknown'] }
-  ];
+  ]);
 
   function showError(message) {
     globalError.textContent = message;
@@ -134,8 +145,11 @@
     q1ThoughtBefore: 'tb1', q1YesMonthYear: 'tb1', q1YesWhy: 'tb1', q1AwarenessSource: 'tb1', q1NoMonthYear: 'tb1', q1NoExplain: 'tb1',
     q2Remember: 'tb2', q2RememberWhat: 'tb2', q2MadeThink: 'tb2', q2Explain: 'tb2', q2OtherMemory: 'tb2',
     q3Circumstances: 'tb3', q3Dates: 'tb3', q3Explain: 'tb3',
-    fosVulnerabilities: 'fos1', fosVulnerabilityDetail: 'fos1',
-    fosVulnerabilityExplanation: 'fos1', fosVulnerabilityExplanationDeclined: 'fos1',
+    fosVulnerabilities: 'fos1',
+    fosVulnerabilityHealthDetail: 'fos1', fosVulnerabilityHealthDetailDeclined: 'fos1',
+    fosVulnerabilityLifeEventDetail: 'fos1', fosVulnerabilityLifeEventDetailDeclined: 'fos1',
+    fosVulnerabilityResilienceDetail: 'fos1', fosVulnerabilityResilienceDetailDeclined: 'fos1',
+    fosVulnerabilityCapabilityDetail: 'fos1', fosVulnerabilityCapabilityDetailDeclined: 'fos1',
     fosCourtAction: 'fos2', fosLendingStart: 'fos2', fosLendingStartUnknown: 'fos2',
     fosLendingAmount: 'fos2', fosBalancesPaid: 'fos2',
     fosIncomeEmployment: 'fos3', fosIncomeBenefits: 'fos3', fosIncomeMaintenance: 'fos3', fosIncomePension: 'fos3',
@@ -177,10 +191,6 @@
     } else {
       boxes.forEach((b) => { if (b.value === VULNERABILITY_NONE) b.checked = false; });
     }
-  }
-
-  function hasVulnerabilityCategory() {
-    return checkedValues('fosVulnerabilities').some((v) => v !== VULNERABILITY_NONE);
   }
 
   // A value and its explicit alternative are mutually exclusive in both
@@ -312,9 +322,14 @@
       if (checkedValues('fosVulnerabilities').length === 0) {
         fieldError('fosVulnerabilities', 'Please select all that apply, or select “None of these apply”.');
         ok = false;
-      } else if (hasVulnerabilityCategory()) {
-        eitherOr('fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined', VULNERABILITY_DECLINE_LABEL,
-          `Please tell us briefly what applied to you, or tick “${VULNERABILITY_DECLINE_LABEL}”.`);
+      } else {
+        // Each selected category is answered on its own terms.
+        const chosen = checkedValues('fosVulnerabilities');
+        VULNERABILITY_DETAILS.forEach(([category, field]) => {
+          if (!chosen.includes(category)) return;
+          eitherOr(field, `${field}Declined`, VULNERABILITY_DECLINE_LABEL,
+            `Please tell us how this affected you, or tick “${VULNERABILITY_DECLINE_LABEL}”.`);
+        });
       }
     }
     if (step === 'fos2') {
@@ -386,9 +401,6 @@
       clientName: p.clientName, reference: p.reference, lender: p.lender, product: p.product,
       prefillToken: state.prefillToken,
       fosVulnerabilities: checkedValues('fosVulnerabilities'),
-      fosVulnerabilityExplanation: value('#fosVulnerabilityExplanation'),
-      fosVulnerabilityExplanationDeclined: $('#fosVulnerabilityExplanationDeclined').checked,
-      fosVulnerabilityDetail: value('#fosVulnerabilityDetail'),
       fosCourtAction: selected('fosCourtAction'),
       // When the client says they do not know the date, no date is sent: there
       // is nothing to generate or infer from.
@@ -415,6 +427,10 @@
       startedAt: state.startedAt
     };
     INCOME_ROWS.concat(OUTGOING_ROWS).forEach(([, f]) => { out[f] = value('#' + f); });
+    VULNERABILITY_DETAILS.forEach(([, f]) => {
+      out[f] = value('#' + f);
+      out[`${f}Declined`] = $(`#${f}Declined`).checked;
+    });
     // Time-Bar answers are sent only in combined mode; in FOS-only mode the
     // server rejects them as unknown fields, so they must not be included.
     if (state.mode === 'TIMEBAR_AND_FOS') {
@@ -465,11 +481,16 @@
     // single string, so no category can be lost from the record.
     rows.push(['Do any of the following apply?',
       d.fosVulnerabilities.length ? d.fosVulnerabilities.slice() : NOT_PROVIDED]);
-    if (d.fosVulnerabilities.some((v) => v !== VULNERABILITY_NONE)) {
-      rows.push(['Please briefly tell us what applied to you.',
-        d.fosVulnerabilityExplanationDeclined ? VULNERABILITY_DECLINE_LABEL : displayText(d.fosVulnerabilityExplanation)]);
-    }
-    rows.push(['If there’s anything else you’d like to tell us about this, you can do so here', displayText(d.fosVulnerabilityDetail)]);
+    // One block per selected category, each naming its own circumstance, so two
+    // explanations can never be read as one.
+    VULNERABILITY_DETAILS.forEach(([category, field]) => {
+      if (!d.fosVulnerabilities.includes(category)) return;
+      rows.push([
+        VULNERABILITY_DETAIL_QUESTION,
+        d[`${field}Declined`] ? VULNERABILITY_DECLINE_LABEL : displayText(d[field]),
+        category
+      ]);
+    });
     rows.push(['Has there been any court action related to the complaint (or is any planned)?', d.fosCourtAction]);
     rows.push(['When did the lending start?', d.fosLendingStartUnknown ? UNKNOWN_DATE_LABEL : displayDate(d.fosLendingStart)]);
     rows.push(['How much was the lending initially for?', displayMoney(d.fosLendingAmount)]);
@@ -499,8 +520,12 @@
 
     const review = $('#review');
     review.textContent = '';
-    rows.forEach(([k, v]) => {
+    rows.forEach(([k, v, context]) => {
       const wrap = document.createElement('div'); wrap.className = 'summary-item';
+      if (context) {
+        const c = document.createElement('div'); c.className = 'summary-context'; c.textContent = context;
+        wrap.append(c);
+      }
       const strong = document.createElement('strong'); strong.textContent = k;
       wrap.append(strong);
       if (Array.isArray(v)) {

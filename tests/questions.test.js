@@ -71,7 +71,10 @@ test('every "I don\'t know" answer is one TMS approved, and no other exists', ()
   // The approved set, and nothing else. A new alternative cannot be slipped in
   // without failing here, and none can quietly change its wording.
   const APPROVED = [
-    ['FOS_VULNERABILITY_EXPLANATION', VULNERABILITY_DECLINE_LABEL],
+    ['FOS_VULNERABILITY_HEALTH_DETAIL', VULNERABILITY_DECLINE_LABEL],
+    ['FOS_VULNERABILITY_LIFE_EVENT_DETAIL', VULNERABILITY_DECLINE_LABEL],
+    ['FOS_VULNERABILITY_RESILIENCE_DETAIL', VULNERABILITY_DECLINE_LABEL],
+    ['FOS_VULNERABILITY_CAPABILITY_DETAIL', VULNERABILITY_DECLINE_LABEL],
     ['FOS_LENDING_START', UNKNOWN_DATE_LABEL],
     ['FOS_SAVINGS_AMOUNT', UNKNOWN_LABEL],
     ['FOS_DEPENDANTS_COUNT', UNKNOWN_LABEL],

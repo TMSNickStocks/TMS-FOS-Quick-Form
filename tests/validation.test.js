@@ -6,12 +6,11 @@ const {
   MODE_FOS_ONLY, MODE_TIMEBAR_AND_FOS
 } = require('../lib/validation');
 const { TIMEBAR_QUESTIONS } = require('../lib/questions-timebar');
-const { VULNERABILITY_VALUES, VULNERABILITY_NONE } = require('../lib/questions-fos');
+const { VULNERABILITY_VALUES, VULNERABILITY_NONE, VULNERABILITY_DETAILS } = require('../lib/questions-fos');
 
 const FOS_ANSWERS = {
   fosVulnerabilities: [VULNERABILITY_VALUES[0]],
-  fosVulnerabilityExplanation: 'I was unwell for a long period.',
-  fosVulnerabilityDetail: '',
+  [VULNERABILITY_DETAILS[0].field]: 'I was unwell for a long period.',
   fosCourtAction: 'No',
   fosLendingStart: '2015-06-01',
   fosLendingAmount: '5000',
@@ -114,16 +113,31 @@ test('invented, duplicated or overlong vulnerability values are rejected', () =>
   assert.ok(vulnerabilities([{ toString: () => VULNERABILITY_VALUES[0] }]).error, 'non-string rejected');
 });
 
-test('the source PDF’s own optional free-text box stays optional', () => {
-  // TMS approved a separate required follow-up (covered below). The source
-  // questionnaire's own "anything else" box is still optional and must not
-  // become mandatory as a side effect.
-  const r = validateSubmission(base({
-    fosVulnerabilities: VULNERABILITY_VALUES.slice(0, 4),
-    fosVulnerabilityExplanation: 'One combined explanation.',
-    fosVulnerabilityDetail: ''
+test('the removed combined vulnerability fields are no longer accepted', () => {
+  // The single combined explanation and the source PDF's own optional
+  // "anything else" box were both removed on TMS instruction. They must be
+  // rejected outright, not silently ignored, so a stale client cannot post
+  // answers into a question that no longer exists.
+  for (const field of ['fosVulnerabilityExplanation', 'fosVulnerabilityExplanationDeclined', 'fosVulnerabilityDetail']) {
+    const r = validateSubmission(base({ [field]: 'x' }));
+    assert.equal(r.errors._form, 'Unknown field', `${field} must be rejected as unknown`);
+  }
+});
+
+test('each selected category is answered on its own terms', () => {
+  const [health, lifeEvent] = VULNERABILITY_DETAILS;
+  const both = validateSubmission(base({
+    fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[1]],
+    [health.field]: 'Health explanation.',
+    [lifeEvent.field]: 'Life event explanation.'
   }));
-  assert.equal(r.ok, true);
+  assert.deepEqual(both.errors, {});
+  // Answering one does not satisfy the other.
+  const one = validateSubmission(base({
+    fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[1]],
+    [health.field]: 'Health explanation.'
+  }));
+  assert.ok(one.errors[lifeEvent.field]);
 });
 
 // -------------------------------------------------------------------- mode
