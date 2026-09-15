@@ -1,0 +1,48 @@
+// Regenerates the worked examples in fixtures/ from the real email builder,
+// so the samples can never drift from what the app actually sends.
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { buildEmail } = require('../lib/email-template.js');
+const { VULNERABILITY_VALUES } = require('../lib/questions-fos.js');
+
+const META = { submissionId: 'SAMPLE-ONLY-NOT-A-REAL-SUBMISSION', completedAt: '2026-09-15T14:32:07+01:00' };
+
+const FOS = {
+  clientName: 'Alex Sample', reference: '200000001', lender: 'Example Bank plc', product: 'Credit card',
+  fosVulnerabilities: [VULNERABILITY_VALUES[0], VULNERABILITY_VALUES[2]],
+  fosVulnerabilityDetail: 'I was signed off work for several months and found the paperwork hard to follow.',
+  fosCourtAction: 'No',
+  fosLendingStart: '2016-04-18',
+  fosLendingAmount: '1200',
+  fosBalancesPaid: 'Yes',
+  fosIncomeEmployment: '1450.00', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
+  fosSavings: 'No',
+  fosOutHousing: '620', fosOutUtilities: '180.50', fosOutFood: '260', fosOutTransport: '95',
+  fosOtherExpenses: 'Mobile phone contract and a small catalogue repayment.',
+  fosDependants: 'Yes',
+  fosFurtherLending: 'Yes'
+};
+const TIMEBAR = {
+  communicationEvent: 'an annual statement showing the credit limit increase', communicationDate: 'March 2019',
+  q1ThoughtBefore: 'No',
+  q1AwarenessSource: 'When the basis of my current complaint was explained to me',
+  q1NoMonthYear: 'January 2025',
+  q1NoExplain: 'I only understood there might be a problem once it was explained to me.',
+  q2Remember: 'Not sure',
+  q2OtherMemory: 'I do not recall that statement specifically.',
+  q3Circumstances: 'Yes',
+  q3Dates: '2019 to 2021',
+  q3Explain: 'I was unwell for a long period and struggled to deal with correspondence.'
+};
+
+const out = [
+  ['fos-only', { ...FOS, mode: 'FOS_ONLY' }],
+  ['timebar-and-fos', { ...FOS, ...TIMEBAR, mode: 'TIMEBAR_AND_FOS' }]
+];
+for (const [name, data] of out) {
+  const { text, html } = buildEmail(data, META);
+  fs.writeFileSync(`fixtures/sample-email-${name}.txt`, text, 'utf8');
+  fs.writeFileSync(`fixtures/sample-email-${name}.html`, html, 'utf8');
+  console.log(`fixtures/sample-email-${name}.txt  (${text.split('\n').length} lines)`);
+}

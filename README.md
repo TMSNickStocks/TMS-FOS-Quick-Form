@@ -1,0 +1,170 @@
+# TMS-FOS-Quick-Form
+
+A mobile-first questionnaire that staff send to an existing client by a
+short-lived encrypted link. The client answers on their phone; the completed
+questionnaire is emailed to TMS Legal as an evidence record. There is no
+database.
+
+Two questionnaire modes, chosen by staff:
+
+- **FOS questionnaire only** (`FOS_ONLY`)
+- **Time-Bar + FOS questionnaire** (`TIMEBAR_AND_FOS`) — the approved Time-Bar
+  questionnaire first, then the FOS questionnaire.
+
+This application is a standalone clone of the architecture proven by
+TMS-Timebar-Quick-Form. It has its own repository, its own Vercel project and
+its own credentials. **It does not share configuration with, deploy over, or
+modify TMS-Timebar-Quick-Form or TMS-Timebar-Portal.**
+
+---
+
+## Wording provenance
+
+| Questionnaire | Source | Guard |
+|---|---|---|
+| FOS | `FOS Q's for clients.pdf` | `tests/questions.test.js` asserts every question, heading, note, option and example appears verbatim in `public/index.html` |
+| Time-Bar | the live, approved TMS-Timebar-Quick-Form | reproduced byte-for-byte; a locked SHA-256 of the approved wording in `tests/validation.test.js` fails the build on any edit |
+
+No question has been reworded, expanded, reordered or simplified, and no extra
+question or "I don't know" answer has been added.
+
+---
+
+## Source ambiguities
+
+Flagged rather than silently corrected. **These need a decision before the form
+goes live.**
+
+1. **Two headings address a professional representative, not the client.**
+   The source prints `1. Vulnerabilities (“Tailoring to their circumstances”)`
+   and `6. “Your customer's finances when they borrowed”`. Both are written from
+   the point of view of someone completing the FOS form *about* a customer,
+   while the questions beneath them are in the second person ("Did *you* have
+   any savings…"). Shown to a client, they read oddly. They are reproduced
+   verbatim as approved wording. If TMS wants client-facing headings, that is a
+   wording change and needs approval.
+
+2. **`See examples (dropdown)`** — "(dropdown)" is an authoring instruction, not
+   client-facing text. The visible control label is `See examples`; the
+   disclosure itself is the dropdown.
+
+3. **The two-line table labels in section 6** (`Housing costs (like mortgage,
+   rent or council housing payment)` and the utilities row) are printed across
+   two lines inside one table cell. They are treated as one label each.
+
+4. **The source marks nothing as mandatory.** Choices made, and open for review:
+   - **Required:** the vulnerability question (at least one box, since a
+     `None of these apply` option only means something if an answer is
+     expected), court action, lending start date, initial lending amount,
+     balances paid, savings, dependants, further lending.
+   - **Optional:** every income and outgoings amount, and all three free-text
+     boxes.
+   - A client who cannot recall the exact lending start date currently cannot
+     continue. The brief forbids adding an "I don't know" answer, so this is
+     flagged rather than worked around.
+
+5. **`For example 01/01/2025`** implies DD/MM/YYYY. The form uses a native date
+   control, so the client picks a date and the ambiguity does not arise; the
+   record prints DD/MM/YYYY alongside the ISO value.
+
+---
+
+## Deliberate differences from TMS-Timebar-Quick-Form
+
+1. **A staff-issued link is mandatory.** The Time-Bar form falls back to manual
+   entry when opened without a token. Here the questionnaire mode decides which
+   questions are asked and which sections appear in the record, so it is only
+   ever read from the sealed token — never from client input. Opening the bare
+   URL tells the client to use the link TMS Legal sent.
+2. **Solid buttons use a darker blue** (`--brand-strong`, `#20699e`). White on
+   the original `--brand` is 4.32:1, below the WCAG AA 4.5:1 minimum for 16px
+   bold text. `--brand` is retained for borders and the progress fill, which
+   carry no text. `tests/mobile.test.js` computes every contrast pair.
+
+---
+
+## Architecture
+
+```
+api/       csrf, prefill-create, prefill-resolve, submit   (Vercel functions)
+lib/       questions-timebar, questions-fos, questions (mode assembly),
+           validation, prefill, email-template, mail, security, rate-limit
+public/    index.html, app.js, admin.html, admin.js, styles.css
+scripts/   static-check, syntax-check, credential-scan, sample-emails
+tests/     node:test suites
+fixtures/  worked email examples for both modes
+```
+
+- **No database, no Supabase, no analytics, no third-party scripts.**
+- Matter details travel in an AES-256-GCM token in the URL **fragment**, so they
+  never reach a server log or a Referer header. The token is stripped from the
+  address bar as soon as it is read.
+- The client must enter the matching 9-digit TMS reference before any matter
+  detail is shown.
+- Links expire after 72 hours.
+
+---
+
+## Security controls
+
+- Server-side validation with strict schemas; unknown fields rejected outright
+  (in `FOS_ONLY`, Time-Bar fields are unknown fields).
+- Origin check and double-submit CSRF on every state-changing endpoint.
+- Staff link builder additionally requires `ADMIN_ACCESS_KEY`, compared in
+  constant time.
+- Rate limiting keyed on HMACs of the IP and the reference — the raw reference is
+  never used as a key and never logged.
+- Honeypot field and a minimum completion time.
+- Maximum body size 32 KB.
+- CSP, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `nosniff`,
+  `noindex`, `no-store` (see `vercel.json`).
+- Success is reported **only** after Gmail returns a provider message id. Any
+  other outcome shows the safe failure screen with a phone number.
+- Logs carry a request id, a provider message id, the questionnaire mode, a
+  delivery outcome and a duration — nothing about the client or their answers.
+  `tests/logging.test.js` enforces this statically.
+- No answers in `localStorage`, `sessionStorage` or any URL.
+
+Privacy notice: https://pba-claims.co.uk/website-privacy-policy.php
+
+---
+
+## Email
+
+Sent to `info@moneysolicitor.com` via Google Workspace Gmail API, send-only
+scope (`gmail.send`). Subject is exactly `FOS Questionnaire Answers`.
+Format `TMS-FOS-V1` — see `EMAIL-FORMAT.md`.
+
+OAuth credentials are supplied as environment variables for **this app only**.
+Never reuse credentials from another TMS project and never commit real values.
+
+---
+
+## Environment
+
+See `.env.example`. `MAIL_MODE=fake` accepts submissions and sends nothing;
+keep it until live email is approved.
+
+---
+
+## Local development
+
+```bash
+npm install
+npm run dev     # http://localhost:8787
+npm run build   # typecheck + lint + credential scan + tests
+```
+
+To create a test link locally:
+
+```bash
+node -e "const{encryptPrefill}=require('./lib/prefill');console.log('http://localhost:8787/#t='+encryptPrefill({mode:'FOS_ONLY',clientName:'Alex Sample',reference:'200000001',lender:'Example Bank plc',product:'Credit card'}))"
+```
+
+---
+
+## Related, and untouched
+
+- `TMS-Timebar-Quick-Form` — live and approved; used here as a read-only
+  reference only.
+- `TMS-Timebar-Portal` — not involved.

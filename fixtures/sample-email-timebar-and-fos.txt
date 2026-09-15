@@ -1,0 +1,191 @@
+FOS QUESTIONNAIRE ANSWERS
+--------------------------------
+Format: TMS-FOS-V1
+Questionnaire mode: TIMEBAR_AND_FOS
+Questionnaire: Time-Bar + FOS questionnaire
+Submission ID: SAMPLE-ONLY-NOT-A-REAL-SUBMISSION
+Date completed: 2026-09-15T14:32:07+01:00
+
+ADMIN / MATTER INFORMATION
+
+Client name: Alex Sample
+TMS reference: 200000001
+Lender: Example Bank plc
+Product: Credit card
+Lender communication/event: an annual statement showing the credit limit increase
+Lender event date: March 2019
+
+TIME-BAR QUESTIONNAIRE RESPONSES
+
+[Q1] 1. When did you first think the lender might have done something wrong?
+QUESTION:
+  Before making your current complaint, had you ever thought or questioned whether the lender might have done something wrong by providing, increasing or continuing your borrowing?
+CLIENT ANSWER:
+  No
+
+[Q1_AWARENESS]
+QUESTION:
+  When did you first think or become aware that the lender might have done something wrong?
+CLIENT ANSWER:
+  When the basis of my current complaint was explained to me
+
+[Q1_AWARENESS_DATE]
+QUESTION:
+  Approximate month/year
+CLIENT ANSWER:
+  January 2025
+
+[Q1_AWARENESS_EXPLANATION]
+QUESTION:
+  Please briefly explain how you first became aware, if you can remember.
+CLIENT ANSWER:
+  I only understood there might be a problem once it was explained to me.
+
+[Q2] 2. The communication or event identified by the lender
+CONTEXT:
+  The lender says its records show that an annual statement showing the credit limit increase occurred on or around March 2019.
+  The lender relies on this communication or event as a reason why it says you were, or should reasonably have been, aware that you had cause to complain.
+  We have not been provided with a copy of this communication, so please answer only from what you genuinely remember.
+QUESTION:
+  Do you remember receiving, discussing or becoming aware of this communication or event?
+CLIENT ANSWER:
+  Not sure
+
+[Q2_OTHER_RECOLLECTION]
+QUESTION:
+  If there is anything else you genuinely remember about this communication or event, please tell us below.
+NOTE:
+  Optional.
+CLIENT ANSWER:
+  I do not recall that statement specifically.
+
+[Q3] 3. Did any serious circumstances affect your understanding or ability to act?
+QUESTION:
+  Were there any serious health, personal or financial circumstances, including anything you have previously told us about, that made it harder for you to:
+  • understand the lender’s communications or actions;
+  • realise that the lender might have done something wrong; or
+  • make a complaint sooner?
+CLIENT ANSWER:
+  Yes
+
+[Q3_DATES]
+QUESTION:
+  Approximate dates
+CLIENT ANSWER:
+  2019 to 2021
+
+[Q3_EXPLANATION]
+QUESTION:
+  Please briefly explain what happened, approximately when it affected you and how it made things harder.
+CLIENT ANSWER:
+  I was unwell for a long period and struggled to deal with correspondence.
+
+FOS QUESTIONNAIRE RESPONSES
+
+[FOS_VULNERABILITY] 1. Vulnerabilities (“Tailoring to their circumstances”)
+QUESTION:
+  Do any of the following apply?
+NOTE:
+  Please select all that apply:
+OPTIONS:
+  • A physical or mental health condition which means you find everyday tasks or decision making more difficult
+  • You’ve experienced a major change in your personal life
+  • You struggle to deal with unexpected financial or emotional changes
+  • You sometimes need extra help to understand information or make decisions
+  • None of these apply
+  Each option above except “None of these apply” had a “See examples” control the client could open for examples.
+CLIENT ANSWER:
+  SELECTED: A physical or mental health condition which means you find everyday tasks or decision making more difficult
+  not selected: You’ve experienced a major change in your personal life
+  SELECTED: You struggle to deal with unexpected financial or emotional changes
+  not selected: You sometimes need extra help to understand information or make decisions
+  not selected: None of these apply
+
+[FOS_VULNERABILITY_DETAIL]
+QUESTION:
+  If there’s anything else you’d like to tell us about this, you can do so here
+NOTE:
+  Optional.
+CLIENT ANSWER:
+  I was signed off work for several months and found the paperwork hard to follow.
+
+[FOS_COURT_ACTION] 2. Has there been any court action related to the complaint (or is any planned)?
+QUESTION:
+  Has there been any court action related to the complaint (or is any planned)?
+CLIENT ANSWER:
+  No
+
+[FOS_LENDING_START] 3. When did the lending start?
+QUESTION:
+  When did the lending start?
+NOTE:
+  For example 01/01/2025
+CLIENT ANSWER:
+  18/04/2016 [value: 2016-04-18]
+
+[FOS_LENDING_AMOUNT] 4. How much was the lending initially for?
+QUESTION:
+  How much was the lending initially for?
+NOTE:
+  Enter amount (£)
+CLIENT ANSWER:
+  £1,200.00 [value: 1200]
+
+[FOS_BALANCES_PAID] 5. Have any outstanding balances been paid?
+QUESTION:
+  Have any outstanding balances been paid?
+CLIENT ANSWER:
+  Yes
+
+[FOS_INCOME] 6. “Your customer's finances when they borrowed”
+QUESTION:
+  Income type — Monthly net amount (£)
+CLIENT ANSWER:
+  Employment: £1,450.00 [value: 1450.00]
+  Benefits: Not provided
+  Maintenance: Not provided
+  Pension: Not provided
+
+[FOS_SAVINGS]
+QUESTION:
+  Did you have any savings at the time of the initial lending?
+CLIENT ANSWER:
+  No
+
+[FOS_OUTGOINGS]
+QUESTION:
+  Essential outgoings — Monthly contribution (£)
+CLIENT ANSWER:
+  Housing costs (like mortgage, rent or council housing payment): £620.00 [value: 620]
+  Utilities (like gas, electric, phone, council tax, water): £180.50 [value: 180.50]
+  Food or grocery costs: £260.00 [value: 260]
+  Fuel or transport costs: £95.00 [value: 95]
+
+[FOS_OTHER_EXPENSES]
+QUESTION:
+  Please provide details of any other regular expenses you had at that time (optional)
+CLIENT ANSWER:
+  Mobile phone contract and a small catalogue repayment.
+
+[FOS_DEPENDANTS]
+QUESTION:
+  Did you have any dependants at the time?
+CLIENT ANSWER:
+  Yes
+
+[FOS_FURTHER_LENDING]
+QUESTION:
+  Did you apply for any further lending?
+CLIENT ANSWER:
+  Yes
+
+CONFIRMATION
+
+[CONFIRMATION] Customer confirmation
+STATEMENT:
+  I confirm that these answers are my own and reflect, to the best of my recollection, what I genuinely knew and understood at the relevant time.
+
+Client confirmation: Yes
+Date completed: 2026-09-15T14:32:07+01:00
+
+END FOS QUESTIONNAIRE ANSWERS

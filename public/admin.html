@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>TMS Legal staff link builder</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main>
+  <header class="header"><img class="logo" src="/logo.png" alt="TMS Legal - The Money Solicitor"></header>
+  <h1>Staff link builder</h1>
+  <p class="lead">Create a short-lived client link with the questionnaire details pre-populated. The client must still enter the matching TMS reference before the details are shown.</p>
+  <div class="notice">The generated link contains an encrypted token in the URL fragment. Client information is not placed in readable URL parameters and the token is removed from the address bar after the client opens the page.</div>
+  <div id="adminError" class="error-summary" role="alert" hidden></div>
+  <form id="adminForm" novalidate>
+    <div class="form-row"><label for="adminKey">Staff access key</label><input id="adminKey" type="password" autocomplete="off" maxlength="200"></div>
+
+    <fieldset class="form-row">
+      <legend>Questionnaire required:</legend>
+      <div class="radio-list">
+        <label class="choice"><input type="radio" name="mode" value="FOS_ONLY"><span>FOS questionnaire only</span></label>
+        <label class="choice"><input type="radio" name="mode" value="TIMEBAR_AND_FOS"><span>Time-Bar + FOS questionnaire</span></label>
+      </div>
+      <div class="help">This cannot be changed by the client. It decides which questions they are asked.</div>
+    </fieldset>
+
+    <div class="form-row"><label for="clientName">Client name</label><input id="clientName" type="text" maxlength="120" autocomplete="off"></div>
+    <div class="form-row"><label for="reference">TMS Legal reference</label><input id="reference" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" autocomplete="off"><div class="help">9 digits.</div></div>
+    <div class="form-row"><label for="lender">Lender</label><input id="lender" type="text" maxlength="120" autocomplete="off"></div>
+    <div class="form-row"><label for="product">Product</label><select id="product"><option value="">Select one</option><option>Credit card</option><option>Loan</option><option>Overdraft</option><option>Catalogue</option><option>Store card</option><option>Other</option></select></div>
+
+    <!-- Time-Bar-specific matter details. Requested only when the Time-Bar +
+         FOS questionnaire is selected; never sent in FOS-only mode. -->
+    <div id="timebarFields" hidden>
+      <div class="form-row"><label for="event">Communication or event identified by the lender</label><textarea id="event" maxlength="500"></textarea></div>
+      <div class="form-row"><label for="eventDate">Date identified by the lender</label><input id="eventDate" type="text" maxlength="60" placeholder="For example: 14 March 2020 or March 2020"></div>
+    </div>
+
+    <button class="primary" type="submit">Create client link</button>
+  </form>
+  <section id="linkResult" class="notice success" hidden>
+    <h2>Client link created</h2>
+    <p id="linkMode" class="small"></p>
+    <p id="linkText" class="copy-output"></p>
+    <button id="copyBtn" class="secondary" type="button">Copy link</button>
+    <p class="small">Send only to the intended client. The link expires automatically.</p>
+  </section>
+  <footer><p>Internal TMS Legal utility. Do not send the staff link-builder address to clients.</p></footer>
+</main>
+<script src="/admin.js" defer></script>
+</body>
+</html>

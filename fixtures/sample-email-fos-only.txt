@@ -1,0 +1,124 @@
+FOS QUESTIONNAIRE ANSWERS
+--------------------------------
+Format: TMS-FOS-V1
+Questionnaire mode: FOS_ONLY
+Questionnaire: FOS questionnaire only
+Submission ID: SAMPLE-ONLY-NOT-A-REAL-SUBMISSION
+Date completed: 2026-09-15T14:32:07+01:00
+
+ADMIN / MATTER INFORMATION
+
+Client name: Alex Sample
+TMS reference: 200000001
+Lender: Example Bank plc
+Product: Credit card
+
+FOS QUESTIONNAIRE RESPONSES
+
+[FOS_VULNERABILITY] 1. Vulnerabilities (“Tailoring to their circumstances”)
+QUESTION:
+  Do any of the following apply?
+NOTE:
+  Please select all that apply:
+OPTIONS:
+  • A physical or mental health condition which means you find everyday tasks or decision making more difficult
+  • You’ve experienced a major change in your personal life
+  • You struggle to deal with unexpected financial or emotional changes
+  • You sometimes need extra help to understand information or make decisions
+  • None of these apply
+  Each option above except “None of these apply” had a “See examples” control the client could open for examples.
+CLIENT ANSWER:
+  SELECTED: A physical or mental health condition which means you find everyday tasks or decision making more difficult
+  not selected: You’ve experienced a major change in your personal life
+  SELECTED: You struggle to deal with unexpected financial or emotional changes
+  not selected: You sometimes need extra help to understand information or make decisions
+  not selected: None of these apply
+
+[FOS_VULNERABILITY_DETAIL]
+QUESTION:
+  If there’s anything else you’d like to tell us about this, you can do so here
+NOTE:
+  Optional.
+CLIENT ANSWER:
+  I was signed off work for several months and found the paperwork hard to follow.
+
+[FOS_COURT_ACTION] 2. Has there been any court action related to the complaint (or is any planned)?
+QUESTION:
+  Has there been any court action related to the complaint (or is any planned)?
+CLIENT ANSWER:
+  No
+
+[FOS_LENDING_START] 3. When did the lending start?
+QUESTION:
+  When did the lending start?
+NOTE:
+  For example 01/01/2025
+CLIENT ANSWER:
+  18/04/2016 [value: 2016-04-18]
+
+[FOS_LENDING_AMOUNT] 4. How much was the lending initially for?
+QUESTION:
+  How much was the lending initially for?
+NOTE:
+  Enter amount (£)
+CLIENT ANSWER:
+  £1,200.00 [value: 1200]
+
+[FOS_BALANCES_PAID] 5. Have any outstanding balances been paid?
+QUESTION:
+  Have any outstanding balances been paid?
+CLIENT ANSWER:
+  Yes
+
+[FOS_INCOME] 6. “Your customer's finances when they borrowed”
+QUESTION:
+  Income type — Monthly net amount (£)
+CLIENT ANSWER:
+  Employment: £1,450.00 [value: 1450.00]
+  Benefits: Not provided
+  Maintenance: Not provided
+  Pension: Not provided
+
+[FOS_SAVINGS]
+QUESTION:
+  Did you have any savings at the time of the initial lending?
+CLIENT ANSWER:
+  No
+
+[FOS_OUTGOINGS]
+QUESTION:
+  Essential outgoings — Monthly contribution (£)
+CLIENT ANSWER:
+  Housing costs (like mortgage, rent or council housing payment): £620.00 [value: 620]
+  Utilities (like gas, electric, phone, council tax, water): £180.50 [value: 180.50]
+  Food or grocery costs: £260.00 [value: 260]
+  Fuel or transport costs: £95.00 [value: 95]
+
+[FOS_OTHER_EXPENSES]
+QUESTION:
+  Please provide details of any other regular expenses you had at that time (optional)
+CLIENT ANSWER:
+  Mobile phone contract and a small catalogue repayment.
+
+[FOS_DEPENDANTS]
+QUESTION:
+  Did you have any dependants at the time?
+CLIENT ANSWER:
+  Yes
+
+[FOS_FURTHER_LENDING]
+QUESTION:
+  Did you apply for any further lending?
+CLIENT ANSWER:
+  Yes
+
+CONFIRMATION
+
+[CONFIRMATION] Customer confirmation
+STATEMENT:
+  I confirm that these answers are my own and reflect, to the best of my recollection, what I genuinely knew and understood at the relevant time.
+
+Client confirmation: Yes
+Date completed: 2026-09-15T14:32:07+01:00
+
+END FOS QUESTIONNAIRE ANSWERS

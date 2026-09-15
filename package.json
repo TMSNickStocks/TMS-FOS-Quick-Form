@@ -1,0 +1,20 @@
+{
+  "name": "tms-fos-quick-form",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobile-first TMS Legal FOS questionnaire, with optional approved time-bar questionnaire",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "node scripts/static-check.mjs && node scripts/syntax-check.mjs",
+    "credential-scan": "node scripts/credential-scan.mjs",
+    "build": "npm run typecheck && npm run lint && npm run credential-scan && npm test",
+    "dev": "node dev-server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

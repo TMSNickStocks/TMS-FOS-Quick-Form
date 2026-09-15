@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>TMS Legal questionnaire</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main>
+  <header class="header"><img class="logo" src="/logo.png" alt="TMS Legal - The Money Solicitor"></header>
+
+  <section id="intro">
+    <h1 id="introTitle">Questions about your complaint</h1>
+    <p class="lead" id="introLead">These questions help us put your complaint forward. Please answer based on your own recollection.</p>
+    <p class="lead">Approximate answers are acceptable where you are asked about things that happened some time ago.</p>
+    <div class="notice">Submitting this questionnaire provides information to TMS Legal. It does not itself refer your complaint to the Financial Ombudsman Service or extend any applicable deadline.</div>
+    <p><a class="privacy-link" href="https://pba-claims.co.uk/website-privacy-policy.php" target="_blank" rel="noopener noreferrer">How we use your information — privacy policy (opens in a new tab)</a></p>
+  </section>
+
+  <div id="globalError" class="error-summary" role="alert" tabindex="-1" hidden></div>
+
+  <section id="referenceGate">
+    <h2>Start your questionnaire</h2>
+    <div class="form-row">
+      <label for="gateReference">TMS Legal reference</label>
+      <input id="gateReference" name="gateReference" type="text" inputmode="numeric" autocomplete="off" maxlength="9" pattern="[0-9]{9}" aria-describedby="gateHelp">
+      <div id="gateHelp" class="help">Enter the 9-digit reference provided by TMS Legal.</div>
+    </div>
+    <button id="startBtn" class="primary" type="button">Continue</button>
+  </section>
+
+  <form id="questionnaire" novalidate hidden>
+    <div class="progress-wrap" aria-live="polite">
+      <div class="progress-meta"><span id="progressLabel">Step 1 of 5</span><span id="progressTitle">Your details</span></div>
+      <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+    </div>
+
+    <!-- ===================== Matter details ===================== -->
+    <section class="step" data-step="details">
+      <h2>Your complaint details</h2>
+      <div class="prefill-card">
+        <dl class="prefill-grid">
+          <div><dt>Client name</dt><dd id="showClientName"></dd></div>
+          <div><dt>TMS Legal reference</dt><dd id="showReference"></dd></div>
+          <div><dt>Lender</dt><dd id="showLender"></dd></div>
+          <div><dt>Product</dt><dd id="showProduct"></dd></div>
+        </dl>
+      </div>
+      <div id="eventCard" class="prefill-card" hidden>
+        <p><strong>The communication or event identified by the lender</strong></p>
+        <p>The lender says its records show that <span id="showEvent"></span> occurred on or around <span id="showEventDate"></span>.</p>
+      </div>
+      <div class="actions"><button class="primary next" type="button">Continue</button></div>
+    </section>
+
+    <!-- ===================== Time-Bar questionnaire =====================
+         Approved wording, reproduced unchanged from the live
+         TMS-Timebar-Quick-Form. Shown only in Time-Bar + FOS mode. -->
+    <section class="step" data-step="tb1" hidden>
+      <h2>1. When did you first think the lender might have done something wrong?</h2>
+      <fieldset class="form-row">
+        <legend>Before making your current complaint, had you ever thought or questioned whether the lender might have done something wrong by providing, increasing or continuing your borrowing?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="q1ThoughtBefore" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="q1ThoughtBefore" value="No"><span>No</span></label>
+          <label class="choice"><input type="radio" name="q1ThoughtBefore" value="Not sure"><span>Not sure</span></label>
+        </div>
+      </fieldset>
+
+      <div id="q1Yes" class="conditional" hidden>
+        <div class="form-row">
+          <label for="q1YesMonthYear">Approximately when did you first think this?</label>
+          <input id="q1YesMonthYear" name="q1YesMonthYear" type="text" maxlength="60" autocomplete="off" placeholder="For example: March 2020, early 2020 or 2020">
+          <div class="help">Month/year</div>
+        </div>
+        <div class="form-row">
+          <label for="q1YesWhy">What happened or what information made you think or question whether the lender might have done something wrong?</label>
+          <textarea id="q1YesWhy" name="q1YesWhy" maxlength="800"></textarea>
+        </div>
+      </div>
+
+      <div id="q1No" class="conditional" hidden>
+        <fieldset class="form-row">
+          <legend>When did you first think or become aware that the lender might have done something wrong?</legend>
+          <div class="radio-list">
+            <label class="choice"><input type="radio" name="q1AwarenessSource" value="When the basis of my current complaint was explained to me"><span>When the basis of my current complaint was explained to me</span></label>
+            <label class="choice"><input type="radio" name="q1AwarenessSource" value="From information I found myself"><span>From information I found myself</span></label>
+            <label class="choice"><input type="radio" name="q1AwarenessSource" value="From another person or organisation"><span>From another person or organisation</span></label>
+            <label class="choice"><input type="radio" name="q1AwarenessSource" value="I am not sure"><span>I am not sure</span></label>
+            <label class="choice"><input type="radio" name="q1AwarenessSource" value="Other — please explain"><span>Other — please explain</span></label>
+          </div>
+        </fieldset>
+        <div class="form-row">
+          <label for="q1NoMonthYear">Approximate month/year</label>
+          <input id="q1NoMonthYear" name="q1NoMonthYear" type="text" maxlength="60" autocomplete="off" placeholder="For example: March 2020, early 2020 or 2020">
+        </div>
+        <div class="form-row">
+          <label for="q1NoExplain">Please briefly explain how you first became aware, if you can remember.</label>
+          <textarea id="q1NoExplain" name="q1NoExplain" maxlength="800"></textarea>
+        </div>
+      </div>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
+    </section>
+
+    <section class="step" data-step="tb2" hidden>
+      <h2>2. The communication or event identified by the lender</h2>
+      <p>The lender relies on this communication or event as a reason why it says you were, or should reasonably have been, aware that you had cause to complain.</p>
+      <p>We have not been provided with a copy of this communication, so please answer only from what you genuinely remember.</p>
+      <div class="prefill-card"><p>The lender says its records show that <strong id="q2Event"></strong> occurred on or around <strong id="q2Date"></strong>.</p></div>
+      <fieldset class="form-row">
+        <legend>Do you remember receiving, discussing or becoming aware of this communication or event?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="q2Remember" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="q2Remember" value="No"><span>No</span></label>
+          <label class="choice"><input type="radio" name="q2Remember" value="Not sure"><span>Not sure</span></label>
+        </div>
+      </fieldset>
+      <div id="q2Yes" class="conditional" hidden>
+        <div class="form-row">
+          <label for="q2RememberWhat">What do you remember the communication or event being about, and what did you understand it to mean at the time?</label>
+          <textarea id="q2RememberWhat" name="q2RememberWhat" maxlength="1000"></textarea>
+        </div>
+        <fieldset class="form-row">
+          <legend>At the time, did it make you think or question whether the lender might previously have done something wrong by providing, increasing or continuing your borrowing?</legend>
+          <div class="radio-list">
+            <label class="choice"><input type="radio" name="q2MadeThink" value="Yes"><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="q2MadeThink" value="No"><span>No</span></label>
+            <label class="choice"><input type="radio" name="q2MadeThink" value="Not sure"><span>Not sure</span></label>
+          </div>
+        </fieldset>
+        <div class="form-row">
+          <label for="q2Explain">Please briefly explain your answer in your own words.</label>
+          <textarea id="q2Explain" name="q2Explain" maxlength="1000"></textarea>
+        </div>
+      </div>
+      <div id="q2No" class="conditional" hidden>
+        <div class="form-row">
+          <label for="q2OtherMemory">If there is anything else you genuinely remember about this communication or event, please tell us below.</label>
+          <textarea id="q2OtherMemory" name="q2OtherMemory" maxlength="1000"></textarea>
+          <div class="help">Optional.</div>
+        </div>
+      </div>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
+    </section>
+
+    <section class="step" data-step="tb3" hidden>
+      <h2>3. Did any serious circumstances affect your understanding or ability to act?</h2>
+      <fieldset class="form-row">
+        <legend>Were there any serious health, personal or financial circumstances, including anything you have previously told us about, that made it harder for you to:</legend>
+        <ul>
+          <li>understand the lender’s communications or actions;</li>
+          <li>realise that the lender might have done something wrong; or</li>
+          <li>make a complaint sooner?</li>
+        </ul>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="q3Circumstances" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="q3Circumstances" value="No"><span>No</span></label>
+          <label class="choice"><input type="radio" name="q3Circumstances" value="Not sure"><span>Not sure</span></label>
+        </div>
+      </fieldset>
+      <div id="q3Yes" class="conditional" hidden>
+        <div class="form-row">
+          <label for="q3Dates">Approximate dates</label>
+          <input id="q3Dates" name="q3Dates" type="text" maxlength="120" placeholder="For example: 2021 to 2022">
+        </div>
+        <div class="form-row">
+          <label for="q3Explain">Please briefly explain what happened, approximately when it affected you and how it made things harder.</label>
+          <textarea id="q3Explain" name="q3Explain" maxlength="1400" autocomplete="off"></textarea>
+          <div class="help">Only include information you consider relevant to this question.</div>
+        </div>
+      </div>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
+    </section>
+
+    <!-- ===================== FOS questionnaire =====================
+         Approved wording, reproduced from "FOS Q's for clients.pdf". -->
+    <section class="step" data-step="fos1" hidden>
+      <h2>1. Vulnerabilities (“Tailoring to their circumstances”)</h2>
+      <fieldset class="form-row">
+        <legend>Do any of the following apply?</legend>
+        <div class="help">Please select all that apply:</div>
+        <div class="radio-list">
+
+          <div class="option-group">
+            <label class="choice"><input type="checkbox" name="fosVulnerabilities" value="A physical or mental health condition which means you find everyday tasks or decision making more difficult"><span>A physical or mental health condition which means you find everyday tasks or decision making more difficult</span></label>
+            <details class="examples">
+              <summary>See examples</summary>
+              <div class="examples-body">
+                <p>Some examples of this could include:</p>
+                <ul>
+                  <li>long-term or severe illness</li>
+                  <li>physical disability</li>
+                  <li>sensory impairment (e.g. sight or hearing loss)</li>
+                  <li>mental-health conditions</li>
+                  <li>addictions</li>
+                  <li>cognitive impairment, dementia</li>
+                  <li>learning difficulty</li>
+                  <li>low emotional resilience (stress, anxiety)</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+
+          <div class="option-group">
+            <label class="choice"><input type="checkbox" name="fosVulnerabilities" value="You’ve experienced a major change in your personal life"><span>You’ve experienced a major change in your personal life</span></label>
+            <details class="examples">
+              <summary>See examples</summary>
+              <div class="examples-body">
+                <p>Some examples of this could include:</p>
+                <ul>
+                  <li>bereavement</li>
+                  <li>relationship breakdown, separation or divorce</li>
+                  <li>serious accident</li>
+                  <li>large financial loss or gain</li>
+                  <li>job loss, redundancy or retirement</li>
+                  <li>caring responsibilities</li>
+                  <li>maternity, paternity</li>
+                  <li>changes in family circumstances</li>
+                  <li>domestic abuse, including financial abuse</li>
+                  <li>migration</li>
+                  <li>criminal conviction</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+
+          <div class="option-group">
+            <label class="choice"><input type="checkbox" name="fosVulnerabilities" value="You struggle to deal with unexpected financial or emotional changes"><span>You struggle to deal with unexpected financial or emotional changes</span></label>
+            <details class="examples">
+              <summary>See examples</summary>
+              <div class="examples-body">
+                <p>Some examples of this could include:</p>
+                <ul>
+                  <li>erratic or insufficient income</li>
+                  <li>over-indebtedness, heavy credit use, mortgage arrears</li>
+                  <li>no or very low savings / safety net</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+
+          <div class="option-group">
+            <label class="choice"><input type="checkbox" name="fosVulnerabilities" value="You sometimes need extra help to understand information or make decisions"><span>You sometimes need extra help to understand information or make decisions</span></label>
+            <details class="examples">
+              <summary>See examples</summary>
+              <div class="examples-body">
+                <p>Some examples of this could include:</p>
+                <ul>
+                  <li>low numeracy or literacy</li>
+                  <li>limited knowledge of financial products</li>
+                  <li>low confidence in managing money</li>
+                  <li>poor digital skills</li>
+                  <li>limited English</li>
+                  <li>learning difficulties</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+
+          <div class="option-group">
+            <label class="choice"><input type="checkbox" name="fosVulnerabilities" value="None of these apply"><span>None of these apply</span></label>
+          </div>
+
+        </div>
+      </fieldset>
+
+      <div class="form-row">
+        <label for="fosVulnerabilityDetail">If there’s anything else you’d like to tell us about this, you can do so here</label>
+        <textarea id="fosVulnerabilityDetail" name="fosVulnerabilityDetail" maxlength="1400"></textarea>
+        <div class="help">Optional.</div>
+      </div>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
+    </section>
+
+    <section class="step" data-step="fos2" hidden>
+      <h2>2. Has there been any court action related to the complaint (or is any planned)?</h2>
+      <fieldset class="form-row">
+        <legend>Has there been any court action related to the complaint (or is any planned)?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="fosCourtAction" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="fosCourtAction" value="No"><span>No</span></label>
+        </div>
+      </fieldset>
+
+      <h2>3. When did the lending start?</h2>
+      <div class="form-row">
+        <label for="fosLendingStart">When did the lending start?</label>
+        <input id="fosLendingStart" name="fosLendingStart" type="date" autocomplete="off">
+        <div class="help">For example 01/01/2025</div>
+      </div>
+
+      <h2>4. How much was the lending initially for?</h2>
+      <div class="form-row">
+        <label for="fosLendingAmount">How much was the lending initially for?</label>
+        <input id="fosLendingAmount" name="fosLendingAmount" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        <div class="help">Enter amount (£)</div>
+      </div>
+
+      <h2>5. Have any outstanding balances been paid?</h2>
+      <fieldset class="form-row">
+        <legend>Have any outstanding balances been paid?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="fosBalancesPaid" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="fosBalancesPaid" value="No"><span>No</span></label>
+        </div>
+      </fieldset>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
+    </section>
+
+    <section class="step" data-step="fos3" hidden>
+      <h2>6. “Your customer's finances when they borrowed”</h2>
+
+      <fieldset class="form-row">
+        <legend>Income type — Monthly net amount (£)</legend>
+        <div class="money-row">
+          <label for="fosIncomeEmployment">Employment</label>
+          <input id="fosIncomeEmployment" name="fosIncomeEmployment" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+        <div class="money-row">
+          <label for="fosIncomeBenefits">Benefits</label>
+          <input id="fosIncomeBenefits" name="fosIncomeBenefits" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+        <div class="money-row">
+          <label for="fosIncomeMaintenance">Maintenance</label>
+          <input id="fosIncomeMaintenance" name="fosIncomeMaintenance" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+        <div class="money-row">
+          <label for="fosIncomePension">Pension</label>
+          <input id="fosIncomePension" name="fosIncomePension" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+      </fieldset>
+
+      <fieldset class="form-row">
+        <legend>Did you have any savings at the time of the initial lending?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="fosSavings" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="fosSavings" value="No"><span>No</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-row">
+        <legend>Essential outgoings — Monthly contribution (£)</legend>
+        <div class="money-row">
+          <label for="fosOutHousing">Housing costs (like mortgage, rent or council housing payment)</label>
+          <input id="fosOutHousing" name="fosOutHousing" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+        <div class="money-row">
+          <label for="fosOutUtilities">Utilities (like gas, electric, phone, council tax, water)</label>
+          <input id="fosOutUtilities" name="fosOutUtilities" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+        <div class="money-row">
+          <label for="fosOutFood">Food or grocery costs</label>
+          <input id="fosOutFood" name="fosOutFood" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+        <div class="money-row">
+          <label for="fosOutTransport">Fuel or transport costs</label>
+          <input id="fosOutTransport" name="fosOutTransport" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="0.00">
+        </div>
+      </fieldset>
+
+      <div class="form-row">
+        <label for="fosOtherExpenses">Please provide details of any other regular expenses you had at that time (optional)</label>
+        <textarea id="fosOtherExpenses" name="fosOtherExpenses" maxlength="1400"></textarea>
+      </div>
+
+      <fieldset class="form-row">
+        <legend>Did you have any dependants at the time?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="fosDependants" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="fosDependants" value="No"><span>No</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-row">
+        <legend>Did you apply for any further lending?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="fosFurtherLending" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="fosFurtherLending" value="No"><span>No</span></label>
+        </div>
+      </fieldset>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Review answers</button></div>
+    </section>
+
+    <!-- ===================== Review ===================== -->
+    <section class="step" data-step="review" hidden>
+      <h2>Review your answers</h2>
+      <p>Please check the information below before submitting.</p>
+      <div id="review" class="summary"></div>
+      <fieldset class="form-row">
+        <legend>Customer confirmation</legend>
+        <label class="choice"><input id="confirmation" type="checkbox" name="confirmation" value="yes"><span>I confirm that these answers are my own and reflect, to the best of my recollection, what I genuinely knew and understood at the relevant time.</span></label>
+      </fieldset>
+      <div class="notice small">Your answers will be emailed securely to TMS Legal for your existing matter. Some answers may include sensitive personal information if you choose to provide it.</div>
+      <p><a class="privacy-link" href="https://pba-claims.co.uk/website-privacy-policy.php" target="_blank" rel="noopener noreferrer">How we use your information — privacy policy (opens in a new tab)</a></p>
+      <div class="form-row honeypot" aria-hidden="true" hidden>
+        <label for="website">Website</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button id="submitBtn" class="primary" type="submit">Submit questionnaire</button></div>
+    </section>
+  </form>
+
+  <section id="success" hidden>
+    <div class="notice success" role="status"><h2>Questionnaire received</h2><p>Your answers have been submitted to TMS Legal.</p></div>
+    <p class="small">Please keep your TMS reference for your records.</p>
+  </section>
+
+  <section id="failure" hidden>
+    <div class="notice error" role="alert"><h2>We could not submit your questionnaire</h2><p>Your answers have not been confirmed as received. Please try again in a few minutes.</p></div>
+    <p class="small">If you are still unable to submit later, you may leave a voicemail on <strong>01202 022350</strong> quoting your TMS reference. TMS Legal will return the call when able.</p>
+    <button id="retryBtn" class="secondary" type="button">Return to the form</button>
+  </section>
+
+  <footer>
+    <p>TMS Legal Ltd. This form is for existing client matters only.</p>
+    <p><a class="privacy-link" href="https://pba-claims.co.uk/website-privacy-policy.php" target="_blank" rel="noopener noreferrer">Privacy policy</a></p>
+  </footer>
+</main>
+<script src="/app.js" defer></script>
+</body>
+</html>
