@@ -92,6 +92,13 @@ const idsOf = (text) => parse(text).blocks.map((b) => b.id);
 // every question this particular client was actually asked.
 const FOS_DATA = FOS_BASE;
 const appliedFos = (data = FOS_DATA) => FOS_QUESTIONS.filter((q) => q.applies(data));
+// "None of these apply": no circumstance blocks, so the aggregate question is
+// the only record of what was chosen and is kept.
+const NONE_ONLY = {
+  fosVulnerabilities: [VULNERABILITY_NONE],
+  [VULNERABILITY_DETAILS[0].field]: '', [VULNERABILITY_DETAILS[2].field]: ''
+};
+const noneSelected = (over = {}) => fosOnly({ ...NONE_ONLY, ...over });
 
 // ---------------------------------------------------------------- envelope
 
@@ -201,7 +208,9 @@ test('every FOS answer is preceded by the full approved question', () => {
     assert.ok(b, `${q.id} missing from the record`);
     assert.equal(b.question.join('\n'), q.question, `${q.id} must reproduce its question verbatim`);
     assert.ok(b.order.indexOf('QUESTION') < b.order.indexOf('CLIENT ANSWER'), `${q.id}: question must come before the answer`);
-    if (q.heading) assert.equal(b.heading, q.heading, `${q.id} must reproduce its heading verbatim`);
+    // A heading is printed once per run of blocks that share it, so a block may
+    // legitimately carry none; what it must never do is carry a different one.
+    if (b.heading) assert.equal(b.heading, q.heading, `${q.id} must reproduce its heading verbatim`);
     if (q.note) assert.equal(b.note.join('\n'), q.note, `${q.id} must reproduce its note verbatim`);
   }
 });
@@ -236,21 +245,27 @@ test('the record is not a field dump: no answer appears without a question marke
 // ------------------------------------------------------ vulnerability output
 
 test('the vulnerability question reproduces its full primary question and instruction', () => {
-  const b = parse(fosOnly().text).byId.FOS_VULNERABILITY;
+  const b = parse(noneSelected().text).byId.FOS_VULNERABILITY;
   assert.equal(b.heading, approvedFos('FOS_VULNERABILITY').heading);
   assert.equal(b.question.join('\n'), 'Do any of the following apply?');
   assert.equal(b.note.join('\n'), 'Please select all that apply:');
 });
 
-test('every vulnerability category is recorded as selected or not selected', () => {
-  const b = parse(fosOnly().text).byId.FOS_VULNERABILITY;
+test('the aggregate list is recorded only when no circumstance was selected', () => {
+  // With circumstances selected, each has its own block and the aggregate list
+  // would restate the same answer. It is omitted.
+  assert.equal(parse(fosOnly().text).byId.FOS_VULNERABILITY, undefined);
+  assert.ok(parse(fosOnly().text).byId[VULNERABILITY_DETAILS[0].id], 'the circumstance block carries it instead');
+
+  // With "None of these apply" there are no blocks, so it is kept.
+  const b = parse(noneSelected().text).byId.FOS_VULNERABILITY;
   assert.equal(b.options.length, 5, 'all five options are listed');
   assert.deepEqual(b.answer, [
-    `SELECTED: ${VULNERABILITY_VALUES[0]}`,
+    `not selected: ${VULNERABILITY_VALUES[0]}`,
     `not selected: ${VULNERABILITY_VALUES[1]}`,
-    `SELECTED: ${VULNERABILITY_VALUES[2]}`,
+    `not selected: ${VULNERABILITY_VALUES[2]}`,
     `not selected: ${VULNERABILITY_VALUES[3]}`,
-    `not selected: ${VULNERABILITY_NONE}`
+    `SELECTED: ${VULNERABILITY_NONE}`
   ]);
 });
 
@@ -261,15 +276,21 @@ test('"None of these apply" is recorded explicitly when chosen', () => {
   assert.ok(fosOnly({ fosVulnerabilities: [VULNERABILITY_NONE] }).html.includes(esc(VULNERABILITY_NONE)));
 });
 
-test('all four categories selected are all recorded', () => {
+test('all four categories selected are all recorded, one block each', () => {
   const four = VULNERABILITY_VALUES.slice(0, 4);
-  const b = parse(fosOnly({ fosVulnerabilities: four }).text).byId.FOS_VULNERABILITY;
-  for (const v of four) assert.ok(b.answer.includes(`SELECTED: ${v}`), `${v} must be recorded as selected`);
-  assert.ok(b.answer.includes(`not selected: ${VULNERABILITY_NONE}`));
+  const answers = {};
+  VULNERABILITY_DETAILS.forEach((d, i) => { answers[d.field] = `Answer ${i + 1}.`; });
+  const { byId } = parse(fosOnly({ fosVulnerabilities: four, ...answers }).text);
+  VULNERABILITY_DETAILS.forEach((d, i) => {
+    assert.ok(byId[d.id], `${d.id} must be recorded`);
+    assert.equal(byId[d.id].context.join('\n'), four[i], 'each block names its own circumstance');
+    assert.equal(byId[d.id].answer.join('\n'), `Answer ${i + 1}.`);
+  });
+  assert.equal(byId.FOS_VULNERABILITY, undefined, 'no redundant aggregate list');
 });
 
 test('the example lists are not dumped into the record, but their availability is stated', () => {
-  const { text } = fosOnly();
+  const { text } = noneSelected();
   for (const ex of ['long-term or severe illness', 'bereavement', 'poor digital skills', 'criminal conviction']) {
     assert.ok(!text.includes(ex), `example "${ex}" must not be reproduced in the record`);
   }
@@ -507,7 +528,7 @@ test('the unknown-date answer appears in the combined record too', () => {
 test('the record carries the approved client-facing headings', () => {
   const { text, html } = fosOnly();
   const byId = parse(text).byId;
-  assert.equal(byId.FOS_VULNERABILITY.heading, '1. Your circumstances');
+  assert.equal(byId[VULNERABILITY_DETAILS[0].id].heading, '1. Your circumstances');
   assert.equal(byId.FOS_INCOME.heading, '6. Your finances when you borrowed');
   assert.ok(html.includes('1. Your circumstances'));
   assert.ok(html.includes('6. Your finances when you borrowed'));
@@ -515,10 +536,11 @@ test('the record carries the approved client-facing headings', () => {
 
 test('the heading change did not alter any question or answer in the record', () => {
   const byId = parse(fosOnly().text).byId;
+  const none = parse(noneSelected().text).byId;
   // Section 1: question, instruction and all five options are unchanged.
-  assert.equal(byId.FOS_VULNERABILITY.question.join('\n'), 'Do any of the following apply?');
-  assert.equal(byId.FOS_VULNERABILITY.note.join('\n'), 'Please select all that apply:');
-  assert.equal(byId.FOS_VULNERABILITY.options.length, 5);
+  assert.equal(none.FOS_VULNERABILITY.question.join('\n'), 'Do any of the following apply?');
+  assert.equal(none.FOS_VULNERABILITY.note.join('\n'), 'Please select all that apply:');
+  assert.equal(none.FOS_VULNERABILITY.options.length, 5);
   // Section 6: group question and every row label are unchanged.
   assert.equal(byId.FOS_INCOME.question.join('\n'), 'Income type — Monthly net amount (£)');
   for (const [label] of INCOME_ROWS) {

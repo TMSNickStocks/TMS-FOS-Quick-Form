@@ -120,6 +120,13 @@
     $('#progressLabel').textContent = `Step ${state.index + 1} of ${state.steps.length}`;
     $('#progressTitle').textContent = STEP_TITLES[active] || '';
     $('#progressBar').style.width = `${Math.round(((state.index + 1) / state.steps.length) * 100)}%`;
+    // The introduction belongs to the opening page only. It is shown on the
+    // first step because that is where its mode-specific wording is finally
+    // known, and hidden from every step after: repeated above each question it
+    // pushes the question itself below the fold on a phone, and it has no place
+    // on the review page. The footer keeps a privacy link on every page, and
+    // the review step carries its own notice and link.
+    $('#intro').hidden = state.index > 0;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -477,14 +484,20 @@
       rows.push(['Serious circumstances affected understanding or ability to act?', d.q3Circumstances]);
       if (d.q3Circumstances === 'Yes') rows.push(['Approximate dates', displayText(d.q3Dates)], ['Explanation', d.q3Explain]);
     }
-    // Each selected category is kept as its own line rather than merged into a
-    // single string, so no category can be lost from the record.
-    rows.push(['Do any of the following apply?',
-      d.fosVulnerabilities.length ? d.fosVulnerabilities.slice() : NOT_PROVIDED]);
-    // One block per selected category, each naming its own circumstance, so two
+    // One block per selected circumstance, each naming its own category, so two
     // explanations can never be read as one.
-    VULNERABILITY_DETAILS.forEach(([category, field]) => {
-      if (!d.fosVulnerabilities.includes(category)) return;
+    //
+    // The aggregate list is shown only when there is nothing else to show. With
+    // circumstances selected it would restate, in a bullet list, exactly what
+    // the blocks beneath it already say. With "None of these apply" there are
+    // no blocks, so the aggregate answer is the only record of what was chosen
+    // and must be kept.
+    const selectedCategories = VULNERABILITY_DETAILS.filter(([category]) => d.fosVulnerabilities.includes(category));
+    if (selectedCategories.length === 0) {
+      rows.push(['Do any of the following apply?',
+        d.fosVulnerabilities.length ? d.fosVulnerabilities.slice() : NOT_PROVIDED]);
+    }
+    selectedCategories.forEach(([category, field]) => {
       rows.push([
         VULNERABILITY_DETAIL_QUESTION,
         d[`${field}Declined`] ? VULNERABILITY_DECLINE_LABEL : displayText(d[field]),
@@ -579,7 +592,8 @@
   });
 
   $('#retryBtn').addEventListener('click', () => {
-    $('#failure').hidden = true; $('#intro').hidden = false; form.hidden = false;
+    // Back into the questionnaire, so the introduction stays hidden.
+    $('#failure').hidden = true; form.hidden = false;
     showStep(state.steps.length - 1);
   });
 

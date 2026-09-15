@@ -13,8 +13,9 @@
 | `logging.test.js` | 5 | no `console.*` in `api/` or `lib/` references client data or credentials; submit logs only id, message id, mode, outcome, duration; `lib/mail.js` never logs |
 | `prefill.test.js` | 5 | encryption round trip; tampered token rejected; TTL fallback; finite expiry |
 | `rate-limit.test.js` | 1 | window behaviour |
-| `followups.test.js` | 45 | the follow-ups approved 2026-09-15: **one follow-up per selected circumstance**, each answered independently (text or decline); two and four categories with separate explanations; mixed explained/declined; unticking clears and invalidates; None-of-these clears all four; **the removed combined fields rejected as unknown and absent from the app**; savings Yes+amount / Yes+unknown / No; dependants Yes+count / Yes+unknown / No and the 1-or-more rule; further lending with all three answers, mixed known/unknown, and No; review wiring; record output; full question before every answer; **every contradictory payload rejected server-side**; no follow-up answer in logs; both modes |
-| **Total** | **224** | |
+| `followups.test.js` | 46 | the follow-ups approved 2026-09-15: **one follow-up per selected circumstance**, each answered independently (text or decline); two and four categories with separate explanations; mixed explained/declined; unticking clears and invalidates; None-of-these clears all four; **the removed combined fields rejected as unknown and absent from the app**; savings Yes+amount / Yes+unknown / No; dependants Yes+count / Yes+unknown / No and the 1-or-more rule; further lending with all three answers, mixed known/unknown, and No; review wiring; record output; full question before every answer; **every contradictory payload rejected server-side**; no follow-up answer in logs; both modes |
+| `presentation.test.js` | 17 | the introduction is one block, shown on the opening page and hidden from every later step and from review, with its own wording per mode and the disclaimer and privacy link intact; the aggregate circumstance list is omitted once a circumstance is selected and kept for "None of these apply"; the section heading prints exactly once; no evidence lost; both modes; layout at 320/390/430 |
+| **Total** | **242** | |
 
 ## Static checks (`npm run lint`)
 
@@ -48,6 +49,10 @@ Syntax check: 23 files. Credential scan: passed. Typecheck: passed.
 | Submission | both modes returned the success screen |
 | Server log | `requestId`, `messageId`, `mode`, `delivery`, `durationMs` only |
 | 320 / 390 / 430 px | no horizontal scroll at any width |
+| Introduction | shown on the landing page and step 1; hidden from step 2 onward and on review, in both modes |
+| Combined-mode introduction | its own wording shown on step 1, then hidden |
+| Review, circumstances selected | no aggregate list; one block per circumstance with its own answer |
+| Review, "None of these apply" | aggregate question and that answer retained |
 | Circumstance branches | each follow-up opens and closes with its own category only; "None of these apply" closes all four |
 | Unticking a category | cleared its textarea and its alternative flag |
 | Independent validation | two categories selected, one answered: blocked with the error on the unanswered one |

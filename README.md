@@ -122,6 +122,25 @@ TMS on 2026-09-15; the rest are recorded for provenance.
 
 ---
 
+## Presentation rules
+
+1. **The introduction is an opening-page block.** The heading, the two lead
+   paragraphs, the Ombudsman disclaimer and the privacy link are shown on the
+   landing page and on the first step - which is where the mode-specific
+   wording is finally known - and hidden from every step after. Repeated above
+   each question it pushed the question itself below the fold on a phone, and
+   it has no place on the review page. A privacy link remains reachable
+   everywhere: the footer carries one on every page, and the review step has
+   its own alongside its notice.
+
+2. **Each circumstance is shown once.** Where one or more circumstances were
+   selected, the review screen and the record show each through its own block
+   and omit the aggregate bullet list. Where "None of these apply" was
+   selected there are no blocks, so the aggregate question and that answer are
+   kept.
+
+---
+
 ## Architecture
 
 ```

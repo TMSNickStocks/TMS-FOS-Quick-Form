@@ -15,26 +15,7 @@ Product: Credit card
 
 FOS QUESTIONNAIRE RESPONSES
 
-[FOS_VULNERABILITY] 1. Your circumstances
-QUESTION:
-  Do any of the following apply?
-NOTE:
-  Please select all that apply:
-OPTIONS:
-  • A physical or mental health condition which means you find everyday tasks or decision making more difficult
-  • You’ve experienced a major change in your personal life
-  • You struggle to deal with unexpected financial or emotional changes
-  • You sometimes need extra help to understand information or make decisions
-  • None of these apply
-  Each option above except “None of these apply” had a “See examples” control the client could open for examples.
-CLIENT ANSWER:
-  SELECTED: A physical or mental health condition which means you find everyday tasks or decision making more difficult
-  SELECTED: You’ve experienced a major change in your personal life
-  not selected: You struggle to deal with unexpected financial or emotional changes
-  not selected: You sometimes need extra help to understand information or make decisions
-  not selected: None of these apply
-
-[FOS_VULNERABILITY_HEALTH_DETAIL]
+[FOS_VULNERABILITY_HEALTH_DETAIL] 1. Your circumstances
 CONTEXT:
   A physical or mental health condition which means you find everyday tasks or decision making more difficult
 QUESTION:

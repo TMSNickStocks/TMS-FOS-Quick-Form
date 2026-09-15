@@ -304,7 +304,9 @@ test('the heading change did not touch the substantive wording beneath it', () =
 });
 
 test('only the two headings changed: every other FOS heading is still the source wording', () => {
-  const headings = FOS_QUESTIONS.filter((q) => q.heading).map((q) => q.heading);
+  // Every circumstance block carries the section heading, because any of them
+  // may be the first one recorded; the record prints it once per run.
+  const headings = [...new Set(FOS_QUESTIONS.filter((q) => q.heading).map((q) => q.heading))];
   assert.deepEqual(headings, [
     '1. Your circumstances',
     '2. Has there been any court action related to the complaint (or is any planned)?',

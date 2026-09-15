@@ -118,6 +118,11 @@ form. Omitted entirely in `FOS_ONLY`.
 "None of these apply" is mutually exclusive with the other four, enforced in the
 browser **and** on the server.
 
+The review screen and the evidence record show the aggregate list **only** when
+no circumstance was selected - that is, when the answer was
+"None of these apply", where it is the only record of the answer. With
+circumstances selected, each appears once through its own block instead.
+
 Each of the four substantive categories carries **its own** follow-up, revealed
 directly beneath that category:
 

@@ -105,19 +105,34 @@ end marker. This is asserted directly in `tests/email.test.js`.
 Block ids are stable and match the ids in `lib/questions-timebar.js` and
 `lib/questions-fos.js`.
 
-## Vulnerability output
+## Circumstance output
 
-The block reproduces the full primary question (`Do any of the following apply?`)
-and its instruction (`Please select all that apply:`), lists all five options
-under `OPTIONS:`, and then records **every** option under `CLIENT ANSWER:`
-prefixed either `SELECTED: ` or `not selected: `.
+Which blocks appear depends on what was selected, and the two cases are
+mutually exclusive.
 
-This means:
+**One or more circumstances selected.** Each gets its own block naming the
+circumstance it explains, and the aggregate `FOS_VULNERABILITY` block is
+**omitted** - it would restate in a bullet list exactly what those blocks
+already say.
 
-- selecting several categories records each one explicitly;
-- selecting `None of these apply` records that explicitly, rather than leaving it
-  to be inferred from absence;
-- which categories were *not* selected is equally unambiguous.
+A consequence worth knowing when reading a record: which circumstances applied
+stays explicit (one block each, each naming its category in full), but which
+did **not** apply is now read from the absence of a block rather than from a
+`not selected:` line.
+
+**`None of these apply` selected.** There are no circumstance blocks, so the
+aggregate `FOS_VULNERABILITY` block is kept and is the only record of the
+answer. It reproduces the full primary question (`Do any of the following
+apply?`), its instruction (`Please select all that apply:`), all five options
+under `OPTIONS:`, and every option under `CLIENT ANSWER:` prefixed
+`SELECTED: ` or `not selected: ` - so the answer is stated, never inferred.
+
+### Section heading
+
+Every circumstance block carries the section heading `1. Your circumstances`,
+because any of them may be the first one recorded. The record prints a heading
+once per run of blocks that share it, so the section is headed exactly once
+wherever that run begins.
 
 The example lists behind the `See examples` controls are **not** reproduced.
 They sit behind a collapsed disclosure, so they were available to the client but

@@ -143,15 +143,23 @@ test('5. all four selected, each answered independently', () => {
   DET.forEach((d, i) => assert.equal(block(text, d.id).context.join('\n'), CAT[i]));
 });
 
-test('5b. the selection block still names every category as selected or not', () => {
+test('5b. with circumstances selected there is no redundant aggregate list', () => {
   const { text } = record(withCategories([1, 3]));
-  const answer = answerOf(text, 'FOS_VULNERABILITY');
-  assert.ok(answer.includes(`SELECTED: ${CAT[1]}`));
-  assert.ok(answer.includes(`SELECTED: ${CAT[3]}`));
-  assert.ok(answer.includes(`not selected: ${CAT[0]}`));
-  assert.ok(answer.includes(`not selected: ${CAT[2]}`));
-  assert.ok(answer.includes(`not selected: ${VULNERABILITY_NONE}`));
-  assert.equal(answer.split('\n').length, 5, 'one line per option, never merged');
+  assert.equal(block(text, 'FOS_VULNERABILITY'), null, 'the aggregate list is omitted');
+  // The selected circumstances are still fully evidenced, one block each.
+  assert.equal(block(text, DET[1].id).context.join('\n'), CAT[1]);
+  assert.equal(block(text, DET[3].id).context.join('\n'), CAT[3]);
+  assert.equal(block(text, DET[0].id), null);
+  assert.equal(block(text, DET[2].id), null);
+});
+
+test('5c. "None of these apply" keeps the primary question and that answer', () => {
+  const { text } = record({ fosVulnerabilities: [VULNERABILITY_NONE] });
+  const b = block(text, 'FOS_VULNERABILITY');
+  assert.ok(b, 'the aggregate question is the only circumstance evidence, so it is kept');
+  assert.equal(b.question.join('\n'), 'Do any of the following apply?');
+  assert.ok(b.answer.join('\n').includes(`SELECTED: ${VULNERABILITY_NONE}`));
+  for (const d of DET) assert.equal(block(text, d.id), null, `${d.id} must not appear`);
 });
 
 test('6. a selected category must be answered one way or the other, never both', () => {
