@@ -55,16 +55,29 @@
       if (!r.ok) return err(j.error || 'Could not create link.');
       $('#linkMode').textContent = `Questionnaire: ${MODE_LABELS[selectedMode]}`;
       $('#linkText').textContent = j.link;
+      // The fallback is the full-length link. It is offered whenever it differs
+      // from the primary one - either because the short link could not be
+      // created, or simply so staff have a second option if the short one is
+      // blocked in transit. No technical detail is surfaced either way.
+      const fallback = j.fallbackLink && j.fallbackLink !== j.link ? j.fallbackLink : '';
+      $('#fallbackText').textContent = fallback;
+      $('#fallbackWrap').hidden = !fallback;
+      $('#fallbackWrap').open = false;
       $('#linkResult').hidden = false;
     } catch { err('Could not create link. Please try again.'); }
   });
 
-  $('#copyBtn').addEventListener('click', async () => {
-    const t = $('#linkText').textContent;
-    await navigator.clipboard.writeText(t);
-    $('#copyBtn').textContent = 'Copied';
-    setTimeout(() => { $('#copyBtn').textContent = 'Copy link'; }, 1500);
-  });
+  function copyFrom(sourceId, buttonId, label) {
+    $(buttonId).addEventListener('click', async () => {
+      const t = $(sourceId).textContent;
+      if (!t) return;
+      await navigator.clipboard.writeText(t);
+      $(buttonId).textContent = 'Copied';
+      setTimeout(() => { $(buttonId).textContent = label; }, 1500);
+    });
+  }
+  copyFrom('#linkText', '#copyBtn', 'Copy link');
+  copyFrom('#fallbackText', '#copyFallbackBtn', 'Copy fallback link');
 
   init().catch(() => err('Secure session could not be started.'));
 })();
