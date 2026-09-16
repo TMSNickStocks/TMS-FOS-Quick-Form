@@ -77,14 +77,18 @@ order and the first name that is set wins:
 
 | Purpose | Names tried, in order |
 |---|---|
-| REST URL | `UPSTASH_REDIS_REST_API_URL` → `UPSTASH_REDIS_REST_URL` → `KV_REST_API_URL` |
-| REST token | `UPSTASH_REDIS_REST_API_TOKEN` → `UPSTASH_REDIS_REST_TOKEN` → `KV_REST_API_TOKEN` |
+| REST URL | `UPSTASH_REDIS_KV_REST_API_URL` → `UPSTASH_REDIS_REST_API_URL` → `UPSTASH_REDIS_REST_URL` → `KV_REST_API_URL` |
+| REST token | `UPSTASH_REDIS_KV_REST_API_TOKEN` → `UPSTASH_REDIS_REST_API_TOKEN` → `UPSTASH_REDIS_REST_TOKEN` → `KV_REST_API_TOKEN` |
+
+The first pair is what the integration actually created for this project — the
+Vercel storage integration prefixes everything with `KV_`. The rest are kept as
+aliases so the app still works if the integration is ever re-added plainly.
 
 Nothing is renamed or duplicated, and `Redis.fromEnv()` is deliberately not
 used — it would look for names this project does not have.
 
-`UPSTASH_REDIS_REST_API_READ_ONLY_TOKEN` is **never** used: creating a link is
-a write. `UPSTASH_REDIS_KV_URL` and `UPSTASH_REDIS_REDIS_URL` are the native
+`UPSTASH_REDIS_KV_REST_API_READ_ONLY_TOKEN` is **never** used: creating a link
+is a write. No candidate name matches `READ_ONLY`, and a test enforces it. `UPSTASH_REDIS_KV_URL` and `UPSTASH_REDIS_REDIS_URL` are the native
 Redis protocol and are unused; this app talks to the REST API only.
 
 Values are never logged, printed or returned. `configuredVarNames()` reports
@@ -135,13 +139,27 @@ The fallback link always points at `APP_ORIGIN`, which is where it must work.
 
 A short link is an improvement, not a dependency.
 
-If Redis is down, unreachable, or simply not configured, `createShortCode`
-returns `null` — it never throws — and staff are handed the legacy long link
-as the primary one. They can still issue the questionnaire, and beyond the
+If Redis is down, unreachable, misconfigured or simply absent,
+`createShortCode` returns `null` — it never throws — and staff are handed the
+legacy long link as the primary one.
+
+Obtaining the client is inside the guard as well as the write. The Upstash
+constructor rejects a malformed URL (a `redis://` value in a REST slot, say),
+and requiring the SDK can fail; either would otherwise escape and fail the
+staff request with a 500, which is exactly the outcome this is meant to
+prevent. The result is cached, so one bad configuration is diagnosed once
+rather than on every call. They can still issue the questionnaire, and beyond the
 first click the client experience is identical.
 
-The failure logs one fixed marker, `fos_short_link_create_failed`, with no
-interpolation. Staff see no technical detail.
+The failure logs one fixed marker with no interpolation — either
+`fos_short_link_config_failed` (the client could not be built) or
+`fos_short_link_create_failed` (the write failed). Staff see no technical
+detail.
+
+A configuration that resolves no variable names at all logs **nothing**, since
+that is the ordinary "Redis not set up" case rather than a fault. That
+silence is itself diagnostic: a fallback with no marker means the names did
+not match.
 
 ---
 
@@ -198,6 +216,7 @@ a probe.
 string with no interpolation:
 
 ```
+fos_short_link_config_failed
 fos_short_link_create_failed
 fos_short_link_resolve_failed
 ```
@@ -209,7 +228,7 @@ short code, the TMS reference, client name, lender, product or any answer.
 
 ## Tests
 
-`tests/short-link.test.js` — 38 tests covering code generation and entropy,
+`tests/short-link.test.js` — 43 tests covering code generation and entropy,
 what Redis holds, TTL bounds, resolution and every failure mode, the absence of
 an enumeration oracle, rate limiting, Redis-down and unconfigured fallback,
 legacy compatibility, both questionnaire modes, logging, CSRF and origin,

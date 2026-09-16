@@ -361,26 +361,120 @@ test('13c. the read-only token is never used for writes', () => {
   for (const name of shortLink.URL_VARS.concat(shortLink.TOKEN_VARS)) {
     assert.ok(!/READ_ONLY/i.test(name), `${name} must not be used`);
   }
-  const source = fs.readFileSync('lib/short-link.js', 'utf8');
-  assert.ok(!source.includes('READ_ONLY_TOKEN'), 'the read-only token is not referenced');
+  // Checked against the code that runs, not the comments: the module names the
+  // read-only variable in a comment precisely to record that it must not be
+  // used, and that explanation is worth keeping.
+  const live = fs.readFileSync('lib/short-link.js', 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!live.includes('READ_ONLY'), 'no executable path reads a read-only token');
 });
 
-test('13d. the variable names this project actually uses are supported first', () => {
-  // The Vercel integration used a custom prefix, so these are the names in play.
-  assert.equal(shortLink.URL_VARS[0], 'UPSTASH_REDIS_REST_API_URL');
-  assert.equal(shortLink.TOKEN_VARS[0], 'UPSTASH_REDIS_REST_API_TOKEN');
-  // Standard names still work if the integration is ever re-added plainly.
-  assert.ok(shortLink.URL_VARS.includes('UPSTASH_REDIS_REST_URL'));
-  assert.ok(shortLink.TOKEN_VARS.includes('UPSTASH_REDIS_REST_TOKEN'));
-
-  const saved = process.env.UPSTASH_REDIS_REST_API_URL;
-  process.env.UPSTASH_REDIS_REST_API_URL = 'https://example.invalid';
-  try {
-    assert.equal(shortLink.configuredVarNames().url, 'UPSTASH_REDIS_REST_API_URL');
-  } finally {
-    if (saved === undefined) delete process.env.UPSTASH_REDIS_REST_API_URL;
-    else process.env.UPSTASH_REDIS_REST_API_URL = saved;
+// Helper: run fn with only the given Redis variables set, restoring after.
+function withRedisEnv(vars, fn) {
+  const all = shortLink.URL_VARS.concat(shortLink.TOKEN_VARS);
+  const saved = {};
+  for (const name of all) { saved[name] = process.env[name]; delete process.env[name]; }
+  for (const [name, value] of Object.entries(vars)) process.env[name] = value;
+  try { return fn(); }
+  finally {
+    for (const name of all) {
+      if (saved[name] === undefined) delete process.env[name];
+      else process.env[name] = saved[name];
+    }
   }
+}
+
+test('13d. the names the Vercel integration actually created are checked first', () => {
+  // Production fell back to legacy links because these two were not in the
+  // candidate lists at all: the integration prefixes everything with KV_.
+  assert.equal(shortLink.URL_VARS[0], 'UPSTASH_REDIS_KV_REST_API_URL');
+  assert.equal(shortLink.TOKEN_VARS[0], 'UPSTASH_REDIS_KV_REST_API_TOKEN');
+
+  withRedisEnv({
+    UPSTASH_REDIS_KV_REST_API_URL: 'https://example.invalid',
+    UPSTASH_REDIS_KV_REST_API_TOKEN: 'placeholder-not-a-credential'
+  }, () => {
+    assert.equal(shortLink.isConfigured(), true, 'these names alone are enough');
+    assert.deepEqual(shortLink.configuredVarNames(), {
+      url: 'UPSTASH_REDIS_KV_REST_API_URL',
+      token: 'UPSTASH_REDIS_KV_REST_API_TOKEN'
+    });
+  });
+});
+
+test('13e. the KV names take precedence over every legacy alias', () => {
+  withRedisEnv({
+    UPSTASH_REDIS_KV_REST_API_URL: 'https://chosen.invalid',
+    UPSTASH_REDIS_REST_API_URL: 'https://alias-a.invalid',
+    UPSTASH_REDIS_REST_URL: 'https://alias-b.invalid',
+    KV_REST_API_URL: 'https://alias-c.invalid',
+    UPSTASH_REDIS_KV_REST_API_TOKEN: 'chosen',
+    UPSTASH_REDIS_REST_API_TOKEN: 'alias-a',
+    UPSTASH_REDIS_REST_TOKEN: 'alias-b',
+    KV_REST_API_TOKEN: 'alias-c'
+  }, () => {
+    assert.deepEqual(shortLink.configuredVarNames(), {
+      url: 'UPSTASH_REDIS_KV_REST_API_URL',
+      token: 'UPSTASH_REDIS_KV_REST_API_TOKEN'
+    });
+  });
+});
+
+test('13f. every legacy alias still works on its own', () => {
+  const pairs = [
+    ['UPSTASH_REDIS_REST_API_URL', 'UPSTASH_REDIS_REST_API_TOKEN'],
+    ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+    ['KV_REST_API_URL', 'KV_REST_API_TOKEN']
+  ];
+  for (const [urlName, tokenName] of pairs) {
+    withRedisEnv({ [urlName]: 'https://example.invalid', [tokenName]: 'placeholder' }, () => {
+      assert.deepEqual(shortLink.configuredVarNames(), { url: urlName, token: tokenName },
+        `${urlName} / ${tokenName} still resolve`);
+    });
+  }
+});
+
+test('13g. a read-only token is never selected, under any name', () => {
+  withRedisEnv({
+    UPSTASH_REDIS_KV_REST_API_URL: 'https://example.invalid',
+    UPSTASH_REDIS_KV_REST_API_READ_ONLY_TOKEN: 'read-only-must-not-be-used'
+  }, () => {
+    // The URL resolves, the write token does not, so nothing is configured.
+    assert.equal(shortLink.configuredVarNames().token, null, 'the read-only token is not a candidate');
+    assert.equal(shortLink.isConfigured(), false, 'and it cannot stand in for a write token');
+  });
+});
+
+test('13h. a malformed Redis URL falls back instead of failing the request', async () => {
+  // The Upstash constructor rejects a redis:// value in a REST slot. Before
+  // this was guarded it escaped createShortCode and 500'd the admin request,
+  // which is exactly the case staff must never hit.
+  shortLink._setStore(null);
+  await withRedisEnv({
+    UPSTASH_REDIS_KV_REST_API_URL: 'rediss://default:x@example.invalid:6379',
+    UPSTASH_REDIS_KV_REST_API_TOKEN: 'placeholder'
+  }, async () => {
+    assert.equal(await shortLink.createShortCode('sealed-token'), null, 'no throw, just a fallback');
+    assert.equal(await shortLink.resolveShortCode('ABCDEFGHJKMNPQRS'), null);
+  });
+  shortLink._setStore(store);
+});
+
+test('13i. a broken Redis configuration still issues a working legacy link', async () => {
+  shortLink._setStore(null);
+  const res = await withRedisEnv({
+    UPSTASH_REDIS_KV_REST_API_URL: 'rediss://default:x@example.invalid:6379',
+    UPSTASH_REDIS_KV_REST_API_TOKEN: 'placeholder'
+  }, () => create(MATTER_FOS));
+  shortLink._setStore(store);
+
+  assert.equal(res.statusCode, 200, 'staff are not blocked by a misconfiguration');
+  assert.equal(res.body.short, false);
+  assert.ok(res.body.link.includes('/#t='), 'and the link they are given is the legacy one');
+  // And it genuinely works.
+  const opened = await resolve({ token: res.body.link.split('#t=')[1], reference: '200000001' });
+  assert.equal(opened.statusCode, 200);
 });
 
 // ===================== 14-16. compatibility ===============================
@@ -451,6 +545,7 @@ test('17b. short-link failures log a bare marker and nothing else', () => {
   const source = fs.readFileSync('lib/short-link.js', 'utf8');
   const calls = source.match(/console\s*\.\s*\w+\s*\([^)]*\)/g) || [];
   assert.deepEqual(calls, [
+    "console.warn('fos_short_link_config_failed')",
     "console.warn('fos_short_link_create_failed')",
     "console.warn('fos_short_link_resolve_failed')"
   ], 'a fixed string each, with no interpolation');
