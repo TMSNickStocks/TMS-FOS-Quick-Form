@@ -19,6 +19,6 @@
   ],
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/q/(.*)", "destination": "/index.html" }
+    { "source": "/q/:code", "destination": "/index.html" }
   ]
 }
