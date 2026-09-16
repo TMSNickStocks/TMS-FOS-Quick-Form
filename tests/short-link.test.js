@@ -503,15 +503,16 @@ test('18c. the responses are never cached', async () => {
 
 test('19. /q/<code> serves the existing client page', () => {
   const vercel = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
-  // Vercel matches rewrites with path-to-regexp named parameters. A raw regex
-  // group compiles but never matches, which showed up only in production as a
-  // 404 on /q/<code> while /admin and the headers worked - so the syntax is
-  // pinned here rather than just the presence of a rewrite.
+  // Vercel matches rewrites with path-to-regexp named parameters, and this is a
+  // static site with cleanUrls, so the destination is the root rather than a
+  // file path - the SPA form Vercel documents. Both halves are pinned because
+  // a wrong pattern or destination fails only in production, as a 404 on
+  // /q/<code> while /admin and the headers carry on working.
   const rewrite = vercel.rewrites.find((r) => r.source === '/q/:code');
   assert.ok(rewrite, 'the short path is rewritten with a named parameter');
   assert.ok(!vercel.rewrites.some((r) => /\(\.\*\)/.test(r.source)),
     'no raw regex group: it silently fails to match on Vercel');
-  assert.equal(rewrite.destination, '/index.html', 'to the existing page, not a new one');
+  assert.equal(rewrite.destination, '/', 'served from the root, which already serves the client app');
   // The dev server mirrors it, so the flow can be exercised locally.
   assert.match(fs.readFileSync('dev-server.js', 'utf8'), /\/\^\\\/q\\\/\[\^\/\]\+\$\//);
   // Security headers still apply to every path.
