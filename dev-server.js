@@ -29,7 +29,8 @@ const server=http.createServer(async(req,res)=>{
     req.headers.origin=req.headers.origin||process.env.APP_ORIGIN;
     return api[u.pathname](req,res);
   }
-  let pathname=u.pathname==='/'?'/index.html':u.pathname==='/admin'?'/admin.html':u.pathname;
+  // /q/<code> serves the client page, matching the Vercel rewrite.
+  let pathname=u.pathname==='/'?'/index.html':u.pathname==='/admin'?'/admin.html':/^\/q\/[^/]+$/.test(u.pathname)?'/index.html':u.pathname;
   const file=path.join(root,pathname.replace(/^\//,''));
   if(!file.startsWith(root)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.statusCode=404;return res.end('Not found');}
   sendStatic(file,res);

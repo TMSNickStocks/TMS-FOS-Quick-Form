@@ -147,20 +147,27 @@ TMS on 2026-09-15; the rest are recorded for provenance.
 ```
 api/       csrf, prefill-create, prefill-resolve, submit   (Vercel functions)
 lib/       questions-timebar, questions-fos, questions (mode assembly),
-           validation, prefill, email-template, mail, security, rate-limit
+           validation, prefill, short-link, email-template, mail, security,
+           rate-limit
 public/    index.html, app.js, admin.html, admin.js, styles.css
 scripts/   static-check, syntax-check, credential-scan, sample-emails
 tests/     node:test suites
 fixtures/  worked email examples for both modes
 ```
 
-- **No database, no Supabase, no analytics, no third-party scripts.**
+- **No database, no Supabase, no analytics, no third-party scripts.** The one
+  external service is Upstash Redis, which holds short-link codes only and is
+  optional: without it the app issues the legacy long links. See
+  `SHORT-LINKS.md`.
 - Matter details travel in an AES-256-GCM token in the URL **fragment**, so they
   never reach a server log or a Referer header. The token is stripped from the
   address bar as soon as it is read.
 - The client must enter the matching 9-digit TMS reference before any matter
   detail is shown.
 - Links expire after 72 hours.
+- Staff links are shortened to `/q/<code>`, an opaque 80-bit code that resolves
+  server side to the same sealed token. Legacy long links still work. See
+  `SHORT-LINKS.md`.
 
 ---
 

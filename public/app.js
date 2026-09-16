@@ -5,7 +5,7 @@
   const form = $('#questionnaire');
   const gate = $('#referenceGate');
   const globalError = $('#globalError');
-  const state = { mode: '', steps: [], index: 0, csrf: '', prefillToken: '', prefill: null, startedAt: Date.now() };
+  const state = { mode: '', steps: [], index: 0, csrf: '', prefillToken: '', shortCode: '', prefill: null, startedAt: Date.now() };
 
   // The questionnaire mode decides which steps exist. It always comes from the
   // staff-issued link, never from anything the client can change.
@@ -110,6 +110,13 @@
   function tokenFromHash() {
     const m = /^#t=([A-Za-z0-9_-]+)$/.exec(location.hash);
     if (m) { state.prefillToken = m[1]; history.replaceState(null, '', location.pathname); }
+  }
+  // A short link is /q/<code>. The code is opaque - it carries no reference,
+  // name, lender or product - so it is left in the address bar, where it stays
+  // usable if the client reopens the link during its 72 hours.
+  function codeFromPath() {
+    const m = /^\/q\/([0-9A-HJ-NP-TV-Z]{16})\/?$/.exec(location.pathname);
+    if (m) state.shortCode = m[1];
   }
 
   function currentStep() { return state.steps[state.index]; }
@@ -255,18 +262,23 @@
     const reference = $('#gateReference').value.trim();
     if (!/^\d{9}$/.test(reference)) return showError('Please enter your 9-digit TMS Legal reference.');
     // A staff-issued link is required: the questionnaire mode and the matter
-    // details are only ever taken from it.
-    if (!state.prefillToken) {
+    // details are only ever taken from it. Either kind will do.
+    if (!state.prefillToken && !state.shortCode) {
       return showError('Please open this questionnaire using the link TMS Legal sent you.');
     }
     try {
       const r = await fetch('/api/prefill-resolve', {
         method: 'POST', credentials: 'same-origin',
         headers: { 'content-type': 'application/json', 'x-csrf-token': state.csrf },
-        body: JSON.stringify({ token: state.prefillToken, reference })
+        body: JSON.stringify(state.shortCode
+          ? { code: state.shortCode, reference }
+          : { token: state.prefillToken, reference })
       });
       const j = await r.json();
       if (!r.ok) return showError(j.error || 'Please check the reference.');
+      // A short link gets the sealed token back only now, once the reference
+      // has been accepted. From here the two link kinds are identical.
+      if (j.token) state.prefillToken = j.token;
       loadPrefill(j.data);
     } catch { return showError('We could not open this link. Please try again.'); }
     gate.hidden = true; form.hidden = false; showStep(0);
@@ -584,7 +596,7 @@
         throw new Error(j.error || 'Submission failed');
       }
       form.reset(); form.hidden = true; $('#intro').hidden = true; $('#success').hidden = false;
-      state.prefill = null; state.prefillToken = '';
+      state.prefill = null; state.prefillToken = ''; state.shortCode = '';
       history.replaceState(null, '', location.pathname);
     } catch {
       form.hidden = true; $('#intro').hidden = true; $('#failure').hidden = false;
@@ -599,6 +611,7 @@
 
   (async () => {
     tokenFromHash();
+    codeFromPath();
     try { await getCsrf(); } catch {
       showError('This form cannot start securely at the moment. Please try again later.');
       $('#startBtn').disabled = true;
