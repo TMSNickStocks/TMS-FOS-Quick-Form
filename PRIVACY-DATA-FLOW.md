@@ -10,7 +10,7 @@ Privacy notice: https://pba-claims.co.uk/website-privacy-policy.php
 
 Staff enter the questionnaire mode and the matter details in the link builder.
 The server validates them, then encrypts them with AES-256-GCM into a token
-carrying a 72-hour expiry. The token is returned inside a link:
+carrying a 30-day expiry. The token is returned inside a link:
 
 ```
 https://<app>/#t=<token>

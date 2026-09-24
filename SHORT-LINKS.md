@@ -10,7 +10,7 @@ https://tms-fos-quick-form.vercel.app/q/K7P4X9M2TQ6BW8DF     40 characters
 
 The code is an opaque lookup key. It resolves, server side, to **exactly the
 same sealed prefill token** the long link carries. That indirection is the
-whole feature: nothing about the sealed token, the 72-hour expiry, the
+whole feature: nothing about the sealed token, the 30-day expiry, the
 reference gate, the questionnaire, the evidence record or Gmail delivery
 changes, and the old long links keep working.
 
@@ -23,7 +23,7 @@ staff /admin
   └─ POST /api/prefill-create
        ├─ seal the matter into the existing encrypted prefill token
        ├─ generate an opaque 80-bit code
-       ├─ Redis SET fos-short:v1:<code> = <sealed token>   TTL ≤ 72h
+       ├─ Redis SET fos-short:v1:<code> = <sealed token>   TTL ≤ 30d
        └─ return  link: <SHORT_LINK_ORIGIN>/q/<code>
                   fallbackLink: <APP_ORIGIN>/#t=<sealed token>
 
@@ -100,7 +100,7 @@ which variable *names* are in use for diagnostics, never their contents.
 |---|---|
 | Key | `fos-short:v1:<code>` |
 | Value | the sealed prefill token, as a bare string, and nothing else |
-| TTL | `min(72 hours, time remaining on the sealed token)` |
+| TTL | `min(30 days, time remaining on the sealed token)` |
 
 Redis never holds a client name, TMS reference, lender, product, questionnaire
 mode or any answer. Those live encrypted inside the token and are useless
@@ -109,12 +109,12 @@ reference.
 
 The TTL is read from the token's own expiry, so a mapping can never outlive
 the thing it resolves to. If `PREFILL_TTL_HOURS` is shortened the mapping
-shortens with it; if it is lengthened the mapping is still capped at 72 hours.
+shortens with it; if it is lengthened the mapping is still capped at 30 days.
 
 ### Links are reusable
 
 Opening a link does not consume it. A client can close the page and come back
-during the 72 hours, as often as they need.
+during the 30 days, as often as they need.
 
 ---
 
@@ -193,7 +193,7 @@ exchanged for the sealed token and then both follow one path.
 ## Security
 
 Everything already in place is preserved: CSRF, origin checks, keyed rate
-limiting, the sealed prefill, the 72-hour expiry, CSP, HSTS, `no-store`,
+limiting, the sealed prefill, the 30-day expiry, CSP, HSTS, `no-store`,
 `noindex`, `no-referrer`, unknown-field rejection and the client-reference
 gate. The short link adds a lookup in front of the existing path, not a way
 around it.

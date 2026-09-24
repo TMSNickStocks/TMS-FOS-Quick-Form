@@ -29,17 +29,17 @@ QUESTION:
 CLIENT ANSWER:
   When the basis of my current complaint was explained to me
 
-[Q1_AWARENESS_DATE]
+[Q1_FIRST_AWARENESS_DATE]
 QUESTION:
-  Approximate month/year
+  When did you first think the lender acted unfairly?
 CLIENT ANSWER:
-  January 2025
+  Not provided
 
-[Q1_AWARENESS_EXPLANATION]
+[Q1_FIRST_AWARENESS_CAUSE]
 QUESTION:
-  Please briefly explain how you first became aware, if you can remember.
+  What was it that first made you aware the lender might not have acted fairly?
 CLIENT ANSWER:
-  I only understood there might be a problem once it was explained to me.
+  Not provided
 
 [Q2] 2. The communication or event identified by the lender
 CONTEXT:
@@ -79,6 +79,18 @@ QUESTION:
   Please briefly explain what happened, approximately when it affected you and how it made things harder.
 CLIENT ANSWER:
   I was unwell for a long period and struggled to deal with correspondence.
+
+[Q4] 4. Complaining to the lender
+QUESTION:
+  Did you complain to the lender as soon as payments became unaffordable?
+CLIENT ANSWER:
+  Yes
+
+[Q5] 5. Repayment difficulties
+QUESTION:
+  Did you have repayment problems?
+CLIENT ANSWER:
+  No
 
 FOS QUESTIONNAIRE RESPONSES
 
@@ -125,6 +137,12 @@ QUESTION:
   Have any outstanding balances been paid?
 CLIENT ANSWER:
   Yes
+
+[FOS_BALANCES_PAID_DATE]
+QUESTION:
+  What date was the account repaid?
+CLIENT ANSWER:
+  15/01/2020 [value: 2020-01-15]
 
 [FOS_INCOME] 6. Your finances when you borrowed
 QUESTION:

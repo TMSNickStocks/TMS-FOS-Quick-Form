@@ -23,9 +23,23 @@ modify TMS-Timebar-Quick-Form or TMS-Timebar-Portal.**
 | Questionnaire | Source | Guard |
 |---|---|---|
 | FOS | `FOS Q's for clients.pdf` | `tests/questions.test.js` asserts every question, heading, note, option and example appears verbatim in `public/index.html` |
-| Time-Bar | the live, approved TMS-Timebar-Quick-Form | reproduced byte-for-byte; a locked SHA-256 of the approved wording in `tests/validation.test.js` fails the build on any edit |
+| Time-Bar | the live, approved TMS-Timebar-Quick-Form, plus the amendments TMS approved on 2026-09-24 | a locked SHA-256 of the approved wording in `tests/validation.test.js` fails the build on any edit |
 
-No source question has been reworded, expanded, reordered or simplified.
+No source question has been reworded, expanded, reordered or simplified except
+where TMS has approved it in writing, below.
+
+**Approved 2026-09-24 (Time-Bar questionnaire).** The form asked the same two
+first-awareness facts twice — once in the "yes, I had thought about it" branch
+and again in the "no / not sure" branch. They are now asked **once**: a date,
+whether that date is an estimate, and what caused the awareness. The branching
+question and the awareness-source options are unchanged. Two blocks were added:
+section 4, whether the client complained as soon as payments became
+unaffordable, and section 5, repayment difficulties and whether the lender
+offered support. `lib/questions-timebar.js` records the detail in place.
+
+**Approved 2026-09-24 (FOS questionnaire).** "Have any outstanding balances been
+paid?" is unchanged; a Yes now opens one further question, the date the account
+was repaid.
 
 Three changes were made on TMS instruction on 2026-09-15, and only these three.
 Each is marked in place in `lib/questions-fos.js`; anything without such a
@@ -95,7 +109,8 @@ TMS on 2026-09-15; the rest are recorded for provenance.
    - **Required:** the vulnerability question (at least one box, since a
      `None of these apply` option only means something if an answer is
      expected), court action, lending start date, initial lending amount,
-     balances paid, savings, dependants, further lending.
+     balances paid, savings, dependants, further lending, and — approved
+     2026-09-24 — the repayment date wherever balances have been paid.
    - **Optional:** every income and outgoings amount, and all three free-text
      boxes.
    - The lending start date was originally a dead end for a client who could not
@@ -164,7 +179,7 @@ fixtures/  worked email examples for both modes
   address bar as soon as it is read.
 - The client must enter the matching 9-digit TMS reference before any matter
   detail is shown.
-- Links expire after 72 hours.
+- Links expire after 30 days (720 hours).
 - Staff links are shortened to `/q/<code>`, an opaque 80-bit code that resolves
   server side to the same sealed token. Legacy long links still work. See
   `SHORT-LINKS.md`.

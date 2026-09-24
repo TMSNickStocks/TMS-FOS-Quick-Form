@@ -44,17 +44,19 @@ unknown fields** if posted anyway.
 
 ## 2. Time-Bar questionnaire — `TIMEBAR_AND_FOS` only
 
-Approved wording, unchanged. Conditional branches behave exactly as the live
-form. Omitted entirely in `FOS_ONLY`.
+Approved wording. Sections 1 to 3 are unchanged from the live form and their
+conditional branches behave exactly as it does. TMS approved two amendments on
+2026-09-24: the first-awareness date, its estimate flag and its explanation are
+asked **once** rather than once per branch, and sections 4 and 5 were added.
+Omitted entirely in `FOS_ONLY`.
 
 | Block ID | Field | Control | Required | Max | Shown when |
 |---|---|---|---|---|---|
 | `Q1` | `q1ThoughtBefore` | radio Yes/No/Not sure | yes | — | always |
-| `Q1_DATE` | `q1YesMonthYear` | text (free text) | no | 60 | Q1 = Yes |
-| `Q1_EXPLANATION` | `q1YesWhy` | textarea | yes | 800 | Q1 = Yes |
 | `Q1_AWARENESS` | `q1AwarenessSource` | radio, 5 approved options | yes | — | Q1 = No / Not sure |
-| `Q1_AWARENESS_DATE` | `q1NoMonthYear` | text (free text) | no | 60 | Q1 = No / Not sure |
-| `Q1_AWARENESS_EXPLANATION` | `q1NoExplain` | textarea | no | 800 | Q1 = No / Not sure |
+| `Q1_FIRST_AWARENESS_DATE` | `q1AwarenessDate` | date | no | real past date, ≥ 1900, not future | always |
+| `Q1_FIRST_AWARENESS_DATE_ESTIMATED` | `q1AwarenessDateEstimated` | radio Yes/No | yes, whenever the date is given | — | a date was given |
+| `Q1_FIRST_AWARENESS_CAUSE` | `q1AwarenessExplanation` | textarea | yes when Q1 = Yes, otherwise optional | 800 | always |
 | `Q2` | `q2Remember` | radio Yes/No/Not sure | yes | — | always |
 | `Q2_RECOLLECTION` | `q2RememberWhat` | textarea | yes | 1000 | Q2 = Yes |
 | `Q2_CAUSED_CONCERN` | `q2MadeThink` | radio Yes/No/Not sure | yes | — | Q2 = Yes |
@@ -63,6 +65,16 @@ form. Omitted entirely in `FOS_ONLY`.
 | `Q3` | `q3Circumstances` | radio Yes/No/Not sure | yes | — | always |
 | `Q3_DATES` | `q3Dates` | text | no | 120 | Q3 = Yes |
 | `Q3_EXPLANATION` | `q3Explain` | textarea | yes | 1400 | Q3 = Yes |
+| `Q4` | `q4ComplainedPromptly` | radio Yes/No | yes | — | always |
+| `Q4_DELAY` | `q4DelayReason` | textarea | yes | 1400 | Q4 = No |
+| `Q5` | `q5RepaymentProblems` | radio Yes/No | yes | — | always |
+| `Q5_STRUGGLE` | `q5StruggleDetail` | textarea | yes | 1400 | Q5 = Yes |
+| `Q5_LENDER_SUPPORT` | `q5LenderSupport` | radio Yes/No | yes | — | Q5 = Yes |
+
+The retired fields `q1YesMonthYear`, `q1YesWhy`, `q1NoMonthYear` and
+`q1NoExplain` are **not accepted**: a payload still carrying one is rejected as
+an unknown field. Anything belonging to a branch that was not taken is rejected
+in the same way, so a stale answer cannot reach the record.
 
 ---
 
@@ -84,6 +96,7 @@ form. Omitted entirely in `FOS_ONLY`.
 | `FOS_LENDING_START` | `fosLendingStartUnknown` | checkbox “I don't remember the exact date” | no | boolean; mutually exclusive with the date |
 | `FOS_LENDING_AMOUNT` | `fosLendingAmount` | text, decimal keypad | yes | pounds, ≤ 2 dp |
 | `FOS_BALANCES_PAID` | `fosBalancesPaid` | radio Yes/No | yes | — |
+| `FOS_BALANCES_PAID_DATE` | `fosBalancesPaidDate` | date | yes, when balances paid = Yes | real past date, ≥ 1900, not future |
 | `FOS_INCOME` | `fosIncomeEmployment` | text, decimal keypad | no | pounds |
 | `FOS_INCOME` | `fosIncomeBenefits` | text, decimal keypad | no | pounds |
 | `FOS_INCOME` | `fosIncomeMaintenance` | text, decimal keypad | no | pounds |

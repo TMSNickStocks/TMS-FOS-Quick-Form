@@ -40,12 +40,13 @@ const BASE = {
   lender: 'Test Lender', product: 'Credit card',
   fosVulnerabilities: [VULNERABILITY_NONE],
   fosCourtAction: 'No', fosLendingStart: '2015-06-01', fosLendingAmount: '5000',
-  fosBalancesPaid: 'Yes', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No',
+  fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No',
   confirmation: true, website: '', startedAt: Date.now() - 9999
 };
 const TIMEBAR = {
   communicationEvent: 'a test annual statement', communicationDate: 'March 2020',
   q1ThoughtBefore: 'No', q1AwarenessSource: 'From information I found myself',
+  q4ComplainedPromptly: 'Yes', q5RepaymentProblems: 'No',
   q2Remember: 'No', q3Circumstances: 'No'
 };
 const sub = (over = {}) => ({ ...BASE, ...over });

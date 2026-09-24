@@ -49,6 +49,25 @@ test('the financial rows stack, so long labels never overflow', () => {
 
 // ------------------------------------------------------------- touch and text
 
+test('the new date and free-text controls obey the same layout rules', () => {
+  // Added 2026-09-24. A date control is the one input a phone renders with its
+  // own picker, so it has to be in the sized-and-spaced set rather than left to
+  // the browser default, and its label must sit above it like every other.
+  assert.ok(css.includes('input' + String.fromCharCode(91) + 'type="date"'), 'date inputs are styled, not defaulted');
+  for (const id of ['q1AwarenessDate', 'fosBalancesPaidDate']) {
+    assert.match(html, new RegExp(`<label for="${id}">`), `${id} has a label tied to it`);
+    assert.match(html, new RegExp(`id="${id}" name="${id}" type="date"`), `${id} is a real date input`);
+  }
+  for (const id of ['q1AwarenessExplanation', 'q4DelayReason', 'q5StruggleDetail']) {
+    assert.match(html, new RegExp(`<label for="${id}">`), `${id} has a label tied to it`);
+    assert.match(html, new RegExp(`<textarea id="${id}"`), `${id} is a textarea that wraps`);
+  }
+  // The new step is a step like the others, so the progress indicator and the
+  // one-question-per-screen layout hold at 320px without any special case.
+  assert.match(html, /<section class="step" data-step="tb4" hidden>/);
+  assert.ok(!/<table/.test(html), 'nothing new introduces a table, which cannot narrow');
+});
+
 test('form text is at least 16px, so iOS never zooms on focus', () => {
   assert.match(css, /input,\s*select,\s*textarea,\s*button\s*\{[^}]*font-size:\s*16px/);
 });

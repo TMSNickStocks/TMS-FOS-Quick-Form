@@ -11,13 +11,14 @@
   // staff-issued link, never from anything the client can change.
   const SEQUENCES = {
     FOS_ONLY: ['details', 'fos1', 'fos2', 'fos3', 'review'],
-    TIMEBAR_AND_FOS: ['details', 'tb1', 'tb2', 'tb3', 'fos1', 'fos2', 'fos3', 'review']
+    TIMEBAR_AND_FOS: ['details', 'tb1', 'tb2', 'tb3', 'tb4', 'fos1', 'fos2', 'fos3', 'review']
   };
   const STEP_TITLES = {
     details: 'Your details',
     tb1: 'Your first awareness',
     tb2: 'The lender communication',
     tb3: 'Circumstances',
+    tb4: 'Complaining and repayments',
     fos1: 'Your circumstances',
     fos2: 'The lending',
     fos3: 'Your finances',
@@ -84,15 +85,29 @@
     block: `#${field}Block`,
     open: () => checkedValues('fosVulnerabilities').includes(category),
     fields: [field],
-    flags: [`${field}Declined`]
+    flags: [`${field}Declined`],
+    // Radio groups inside the block, cleared with everything else when it
+    // closes. Empty here: these blocks hold a textarea and its checkbox.
+    choices: []
   })).concat([
     { block: '#fosSavingsAmountBlock', open: () => selected('fosSavings') === 'Yes',
-      fields: ['fosSavingsAmount'], flags: ['fosSavingsAmountUnknown'] },
+      fields: ['fosSavingsAmount'], flags: ['fosSavingsAmountUnknown'], choices: [] },
     { block: '#fosDependantsCountBlock', open: () => selected('fosDependants') === 'Yes',
-      fields: ['fosDependantsCount'], flags: ['fosDependantsCountUnknown'] },
+      fields: ['fosDependantsCount'], flags: ['fosDependantsCountUnknown'], choices: [] },
     { block: '#fosFurtherLendingBlock', open: () => selected('fosFurtherLending') === 'Yes',
       fields: ['fosFurtherLendingType', 'fosFurtherLendingLender', 'fosFurtherLendingAmount'],
-      flags: ['fosFurtherLendingTypeUnknown', 'fosFurtherLendingLenderUnknown', 'fosFurtherLendingAmountUnknown'] }
+      flags: ['fosFurtherLendingTypeUnknown', 'fosFurtherLendingLenderUnknown', 'fosFurtherLendingAmountUnknown'],
+      choices: [] },
+    // Approved 2026-09-24.
+    { block: '#fosBalancesPaidDateBlock', open: () => selected('fosBalancesPaid') === 'Yes',
+      fields: ['fosBalancesPaidDate'], flags: [], choices: [] },
+    // The estimate question exists only once there is a date to qualify.
+    { block: '#q1AwarenessDateEstimatedBlock', open: () => value('#q1AwarenessDate') !== '',
+      fields: [], flags: [], choices: ['q1AwarenessDateEstimated'] },
+    { block: '#q4DelayBlock', open: () => selected('q4ComplainedPromptly') === 'No',
+      fields: ['q4DelayReason'], flags: [], choices: [] },
+    { block: '#q5Block', open: () => selected('q5RepaymentProblems') === 'Yes',
+      fields: ['q5StruggleDetail'], flags: [], choices: ['q5LenderSupport'] }
   ]);
 
   function showError(message) {
@@ -113,7 +128,7 @@
   }
   // A short link is /q/<code>. The code is opaque - it carries no reference,
   // name, lender or product - so it is left in the address bar, where it stays
-  // usable if the client reopens the link during its 72 hours.
+  // usable if the client reopens the link during its 30 days.
   function codeFromPath() {
     const m = /^\/q\/([0-9A-HJ-NP-TV-Z]{16})\/?$/.exec(location.pathname);
     if (m) state.shortCode = m[1];
@@ -156,16 +171,19 @@
   const FIELD_STEP = {
     clientName: 'details', lender: 'details', product: 'details', reference: 'details',
     communicationEvent: 'details', communicationDate: 'details',
-    q1ThoughtBefore: 'tb1', q1YesMonthYear: 'tb1', q1YesWhy: 'tb1', q1AwarenessSource: 'tb1', q1NoMonthYear: 'tb1', q1NoExplain: 'tb1',
+    q1ThoughtBefore: 'tb1', q1AwarenessSource: 'tb1',
+    q1AwarenessDate: 'tb1', q1AwarenessDateEstimated: 'tb1', q1AwarenessExplanation: 'tb1',
     q2Remember: 'tb2', q2RememberWhat: 'tb2', q2MadeThink: 'tb2', q2Explain: 'tb2', q2OtherMemory: 'tb2',
     q3Circumstances: 'tb3', q3Dates: 'tb3', q3Explain: 'tb3',
+    q4ComplainedPromptly: 'tb4', q4DelayReason: 'tb4',
+    q5RepaymentProblems: 'tb4', q5StruggleDetail: 'tb4', q5LenderSupport: 'tb4',
     fosVulnerabilities: 'fos1',
     fosVulnerabilityHealthDetail: 'fos1', fosVulnerabilityHealthDetailDeclined: 'fos1',
     fosVulnerabilityLifeEventDetail: 'fos1', fosVulnerabilityLifeEventDetailDeclined: 'fos1',
     fosVulnerabilityResilienceDetail: 'fos1', fosVulnerabilityResilienceDetailDeclined: 'fos1',
     fosVulnerabilityCapabilityDetail: 'fos1', fosVulnerabilityCapabilityDetailDeclined: 'fos1',
     fosCourtAction: 'fos2', fosLendingStart: 'fos2', fosLendingStartUnknown: 'fos2',
-    fosLendingAmount: 'fos2', fosBalancesPaid: 'fos2',
+    fosLendingAmount: 'fos2', fosBalancesPaid: 'fos2', fosBalancesPaidDate: 'fos2',
     fosIncomeEmployment: 'fos3', fosIncomeBenefits: 'fos3', fosIncomeMaintenance: 'fos3', fosIncomePension: 'fos3',
     fosSavings: 'fos3', fosSavingsAmount: 'fos3', fosSavingsAmountUnknown: 'fos3',
     fosOutHousing: 'fos3', fosOutUtilities: 'fos3', fosOutFood: 'fos3', fosOutTransport: 'fos3',
@@ -188,7 +206,9 @@
 
   function updateConditionals() {
     const q1 = selected('q1ThoughtBefore');
-    if ($('#q1Yes')) { $('#q1Yes').hidden = q1 !== 'Yes'; $('#q1No').hidden = !(q1 === 'No' || q1 === 'Not sure'); }
+    // Only the awareness-source options are branch-specific now: the date, the
+    // estimate answer and the explanation are asked once, of everybody.
+    if ($('#q1No')) $('#q1No').hidden = !(q1 === 'No' || q1 === 'Not sure');
     const q2 = selected('q2Remember');
     if ($('#q2Yes')) { $('#q2Yes').hidden = q2 !== 'Yes'; $('#q2No').hidden = !(q2 === 'No' || q2 === 'Not sure'); }
     if ($('#q3Yes')) $('#q3Yes').hidden = selected('q3Circumstances') !== 'Yes';
@@ -234,6 +254,9 @@
       if (!open) {
         b.fields.forEach((f) => { const el = $('#' + f); if (el) { el.value = ''; el.disabled = false; } });
         b.flags.forEach((f) => { const el = $('#' + f); if (el) el.checked = false; });
+        b.choices.forEach((name) => {
+          $$(`input[name="${name}"]`).forEach((el) => { el.checked = false; });
+        });
       }
     });
   }
@@ -313,8 +336,30 @@
     if (step === 'tb1') {
       need('q1ThoughtBefore');
       const q1 = selected('q1ThoughtBefore');
-      if (q1 === 'Yes' && !value('#q1YesWhy')) { fieldError('q1YesWhy', 'Please answer this question.'); ok = false; }
       if (q1 === 'No' || q1 === 'Not sure') need('q1AwarenessSource');
+      // The explanation carries the requiredness the two retired boxes had
+      // between them: required of a client who had thought about it, asked but
+      // not compelled of one who had not.
+      if (q1 === 'Yes' && !value('#q1AwarenessExplanation')) {
+        fieldError('q1AwarenessExplanation', 'Please answer this question.'); ok = false;
+      }
+      const awarenessDate = value('#q1AwarenessDate');
+      if (awarenessDate && awarenessDate > new Date().toISOString().slice(0, 10)) {
+        fieldError('q1AwarenessDate', 'The date cannot be in the future.'); ok = false;
+      }
+      // A date and its precision travel together.
+      if (awarenessDate) need('q1AwarenessDateEstimated');
+    }
+    if (step === 'tb4') {
+      need('q4ComplainedPromptly');
+      if (selected('q4ComplainedPromptly') === 'No' && !value('#q4DelayReason')) {
+        fieldError('q4DelayReason', 'Please answer this question.'); ok = false;
+      }
+      need('q5RepaymentProblems');
+      if (selected('q5RepaymentProblems') === 'Yes') {
+        if (!value('#q5StruggleDetail')) { fieldError('q5StruggleDetail', 'Please answer this question.'); ok = false; }
+        need('q5LenderSupport');
+      }
     }
     if (step === 'tb2') {
       need('q2Remember');
@@ -369,6 +414,16 @@
       if (!amount) { fieldError('fosLendingAmount', 'Please enter an amount.'); ok = false; }
       else if (!moneyOk(amount)) { fieldError('fosLendingAmount', MONEY_MESSAGE); ok = false; }
       need('fosBalancesPaid');
+      // Approved 2026-09-24. Required under a Yes; the branch clears and hides
+      // it under a No, so there is nothing to check there.
+      if (selected('fosBalancesPaid') === 'Yes') {
+        const repaid = value('#fosBalancesPaidDate');
+        if (!repaid) {
+          fieldError('fosBalancesPaidDate', 'Please enter the date the account was repaid.'); ok = false;
+        } else if (repaid > new Date().toISOString().slice(0, 10)) {
+          fieldError('fosBalancesPaidDate', 'The date cannot be in the future.'); ok = false;
+        }
+      }
     }
     if (step === 'fos3') {
       MONEY_FIELDS.filter((f) => f !== 'fosLendingAmount').forEach((f) => {
@@ -427,6 +482,9 @@
       fosLendingStart: $('#fosLendingStartUnknown').checked ? '' : value('#fosLendingStart'),
       fosLendingAmount: value('#fosLendingAmount'),
       fosBalancesPaid: selected('fosBalancesPaid'),
+      // Sent only under a Yes: the server rejects a date beside a No as
+      // contradictory, which is what the branch clearing above prevents.
+      fosBalancesPaidDate: selected('fosBalancesPaid') === 'Yes' ? value('#fosBalancesPaidDate') : '',
       fosSavings: selected('fosSavings'),
       fosSavingsAmount: value('#fosSavingsAmount'),
       fosSavingsAmountUnknown: $('#fosSavingsAmountUnknown').checked,
@@ -455,11 +513,20 @@
     if (state.mode === 'TIMEBAR_AND_FOS') {
       Object.assign(out, {
         communicationEvent: p.communicationEvent, communicationDate: p.communicationDate,
-        q1ThoughtBefore: selected('q1ThoughtBefore'), q1YesMonthYear: value('#q1YesMonthYear'), q1YesWhy: value('#q1YesWhy'),
-        q1AwarenessSource: selected('q1AwarenessSource'), q1NoMonthYear: value('#q1NoMonthYear'), q1NoExplain: value('#q1NoExplain'),
+        q1ThoughtBefore: selected('q1ThoughtBefore'),
+        q1AwarenessSource: selected('q1AwarenessSource'),
+        q1AwarenessDate: value('#q1AwarenessDate'),
+        // Asked only where a date exists, so nothing is sent otherwise.
+        q1AwarenessDateEstimated: value('#q1AwarenessDate') ? selected('q1AwarenessDateEstimated') : '',
+        q1AwarenessExplanation: value('#q1AwarenessExplanation'),
         q2Remember: selected('q2Remember'), q2RememberWhat: value('#q2RememberWhat'), q2MadeThink: selected('q2MadeThink'),
         q2Explain: value('#q2Explain'), q2OtherMemory: value('#q2OtherMemory'),
-        q3Circumstances: selected('q3Circumstances'), q3Dates: value('#q3Dates'), q3Explain: value('#q3Explain')
+        q3Circumstances: selected('q3Circumstances'), q3Dates: value('#q3Dates'), q3Explain: value('#q3Explain'),
+        q4ComplainedPromptly: selected('q4ComplainedPromptly'),
+        q4DelayReason: selected('q4ComplainedPromptly') === 'No' ? value('#q4DelayReason') : '',
+        q5RepaymentProblems: selected('q5RepaymentProblems'),
+        q5StruggleDetail: selected('q5RepaymentProblems') === 'Yes' ? value('#q5StruggleDetail') : '',
+        q5LenderSupport: selected('q5RepaymentProblems') === 'Yes' ? selected('q5LenderSupport') : ''
       });
     }
     return out;
@@ -488,13 +555,24 @@
     if (state.mode === 'TIMEBAR_AND_FOS') {
       rows.push(['Communication/event', d.communicationEvent], ['Date identified by lender', d.communicationDate]);
       rows.push(['Before current complaint, had you questioned whether the lender might have done something wrong?', d.q1ThoughtBefore]);
-      if (d.q1ThoughtBefore === 'Yes') rows.push(['Approximately when?', displayText(d.q1YesMonthYear)], ['What happened / what information?', d.q1YesWhy]);
-      else rows.push(['How did you first become aware?', d.q1AwarenessSource], ['Approximate month/year', displayText(d.q1NoMonthYear)], ['Explanation', displayText(d.q1NoExplain)]);
+      if (d.q1ThoughtBefore !== 'Yes') rows.push(['How did you first become aware?', d.q1AwarenessSource]);
+      // Asked once, so shown once, whichever branch was taken.
+      rows.push(['When did you first think the lender acted unfairly?', displayDate(d.q1AwarenessDate)]);
+      if (d.q1AwarenessDate) rows.push(['Is this an estimated date?', d.q1AwarenessDateEstimated]);
+      rows.push(['What was it that first made you aware the lender might not have acted fairly?',
+        displayText(d.q1AwarenessExplanation)]);
       rows.push(['Remember the lender communication/event?', d.q2Remember]);
       if (d.q2Remember === 'Yes') rows.push(['What do you remember / understand?', d.q2RememberWhat], ['Did it make you question earlier lending?', d.q2MadeThink], ['Explanation', d.q2Explain]);
       else rows.push(['Anything else remembered', displayText(d.q2OtherMemory)]);
       rows.push(['Serious circumstances affected understanding or ability to act?', d.q3Circumstances]);
       if (d.q3Circumstances === 'Yes') rows.push(['Approximate dates', displayText(d.q3Dates)], ['Explanation', d.q3Explain]);
+      rows.push(['Did you complain to the lender as soon as payments became unaffordable?', d.q4ComplainedPromptly]);
+      if (d.q4ComplainedPromptly === 'No') rows.push(['Please explain why there was a delay.', d.q4DelayReason]);
+      rows.push(['Did you have repayment problems?', d.q5RepaymentProblems]);
+      if (d.q5RepaymentProblems === 'Yes') {
+        rows.push(['When did you start to struggle to repay the borrowing? What was the impact of this, and how long did it last?', d.q5StruggleDetail]);
+        rows.push(['Did the lender provide any support when you were struggling financially (for example, offering payment deferrals or a repayment plan)?', d.q5LenderSupport]);
+      }
     }
     // One block per selected circumstance, each naming its own category, so two
     // explanations can never be read as one.
@@ -520,6 +598,7 @@
     rows.push(['When did the lending start?', d.fosLendingStartUnknown ? UNKNOWN_DATE_LABEL : displayDate(d.fosLendingStart)]);
     rows.push(['How much was the lending initially for?', displayMoney(d.fosLendingAmount)]);
     rows.push(['Have any outstanding balances been paid?', d.fosBalancesPaid]);
+    if (d.fosBalancesPaid === 'Yes') rows.push(['What date was the account repaid?', displayDate(d.fosBalancesPaidDate)]);
     INCOME_ROWS.forEach(([label, f]) => rows.push([`Income — ${label}`, displayMoney(d[f])]));
     rows.push(['Did you have any savings at the time of the initial lending?', d.fosSavings]);
     if (d.fosSavings === 'Yes') {

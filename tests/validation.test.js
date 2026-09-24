@@ -14,7 +14,7 @@ const FOS_ANSWERS = {
   fosCourtAction: 'No',
   fosLendingStart: '2015-06-01',
   fosLendingAmount: '5000',
-  fosBalancesPaid: 'Yes',
+  fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15',
   fosIncomeEmployment: '1500', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
   fosSavings: 'No',
   fosOutHousing: '600', fosOutUtilities: '150', fosOutFood: '250', fosOutTransport: '',
@@ -25,7 +25,9 @@ const FOS_ANSWERS = {
 const TIMEBAR_ANSWERS = {
   communicationEvent: 'a test annual statement', communicationDate: 'March 2020',
   q1ThoughtBefore: 'No', q1AwarenessSource: 'From information I found myself',
-  q1NoMonthYear: 'June 2024', q1NoExplain: 'Synthetic explanation.',
+  q1AwarenessDate: '2024-06-10', q1AwarenessDateEstimated: 'Yes',
+  q1AwarenessExplanation: 'Synthetic explanation.',
+  q4ComplainedPromptly: 'Yes', q5RepaymentProblems: 'No',
   q2Remember: 'No', q2OtherMemory: 'Synthetic note.',
   q3Circumstances: 'No'
 };
@@ -255,8 +257,8 @@ test('the free-text answers accept ordinary punctuation and are length-capped', 
 });
 
 test('the combined mode keeps the approved Time-Bar conditional branches', () => {
-  const yes = validateSubmission(combined({ q1ThoughtBefore: 'Yes', q1AwarenessSource: '', q1YesWhy: '' }));
-  assert.equal(yes.errors.q1YesWhy, 'Please answer this question');
+  const yes = validateSubmission(combined({ q1ThoughtBefore: 'Yes', q1AwarenessSource: '', q1AwarenessExplanation: '' }));
+  assert.equal(yes.errors.q1AwarenessExplanation, 'Please answer this question');
   const unsure = validateSubmission(combined({ q1ThoughtBefore: 'Not sure', q1AwarenessSource: '' }));
   assert.equal(unsure.errors.q1AwarenessSource, 'Please select an answer');
   const q2 = validateSubmission(combined({ q2Remember: 'Yes', q2RememberWhat: '', q2MadeThink: '', q2Explain: '' }));
@@ -292,26 +294,48 @@ test('a 9-digit reference is required', () => {
 
 // ------------------------------------------------- Time-Bar wording parity
 
-test('the Time-Bar wording is byte-identical to the approved live form', () => {
-  // Locked hash of the approved wording carried over from
-  // TMS-Timebar-Quick-Form (lib/questions.js at commit 6f5f026). If anyone
-  // rewords, reorders or simplifies a Time-Bar question, this fails.
+test('the Time-Bar wording is byte-identical to the approved wording', () => {
+  // Locked hash of the approved wording: the wording carried over from
+  // TMS-Timebar-Quick-Form (lib/questions.js at commit 6f5f026), plus the
+  // amendments TMS approved on 2026-09-24 - the first-awareness group asked
+  // once, and sections 4 and 5. If anyone rewords, reorders or simplifies a
+  // Time-Bar question, this still fails.
+  //
+  // Re-pinning this hash is not a formality: it is the record that a wording
+  // change was approved, and it belongs in the same commit as the change.
   const norm = TIMEBAR_QUESTIONS
     .map((q) => [q.id, q.heading || '', q.question, q.note || '', (q.bullets || []).join('|')].join(''))
     .join('');
   const ctx = TIMEBAR_QUESTIONS.find((q) => q.id === 'Q2')
     .context({ communicationEvent: 'E', communicationDate: 'D' }).join('');
   const hash = crypto.createHash('sha256').update(`${norm}${ctx}`, 'utf8').digest('hex');
-  assert.equal(hash, 'b4f1b4dfdd97e08a0370b857231d09d9b76d70e9b076243814f7367e1f173583',
+  assert.equal(hash, 'fe84867030018f8e67b04b129e4d78fe400184c32d3b84c0810d9a95583d5047',
     'the approved Time-Bar wording must not be edited');
 });
 
-test('the Time-Bar field names are unchanged, so the record stays comparable', () => {
+test('the Time-Bar field names are the approved set, so the record stays comparable', () => {
+  // Amended 2026-09-24: the first-awareness group replaced the two per-branch
+  // date/explanation pairs, and sections 4 and 5 were added. Everything else
+  // is unchanged, and this list is what a reader of an older record compares
+  // against.
   assert.deepEqual(TIMEBAR_QUESTIONS.map((q) => q.field), [
-    'q1ThoughtBefore', 'q1YesMonthYear', 'q1YesWhy', 'q1AwarenessSource', 'q1NoMonthYear', 'q1NoExplain',
+    'q1ThoughtBefore', 'q1AwarenessSource',
+    'q1AwarenessDate', 'q1AwarenessDateEstimated', 'q1AwarenessExplanation',
     'q2Remember', 'q2RememberWhat', 'q2MadeThink', 'q2Explain', 'q2OtherMemory',
-    'q3Circumstances', 'q3Dates', 'q3Explain'
+    'q3Circumstances', 'q3Dates', 'q3Explain',
+    'q4ComplainedPromptly', 'q4DelayReason',
+    'q5RepaymentProblems', 'q5StruggleDetail', 'q5LenderSupport'
   ]);
+});
+
+test('the retired first-awareness fields are refused, not ignored', () => {
+  // A stale browser, a replayed payload or a copied script still carrying one
+  // of the two retired pairs must be rejected rather than half-recorded.
+  for (const field of ['q1YesMonthYear', 'q1YesWhy', 'q1NoMonthYear', 'q1NoExplain']) {
+    const r = validateSubmission(combined({ [field]: 'anything' }));
+    assert.equal(r.ok, false, `${field} must not be accepted`);
+    assert.equal(r.errors._form, 'Unknown field');
+  }
 });
 
 // ------------------------------------ lending start date / "I don't remember"

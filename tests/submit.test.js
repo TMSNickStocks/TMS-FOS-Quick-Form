@@ -51,15 +51,17 @@ const MATTER_COMBINED = { ...MATTER_FOS, mode: MODE_TIMEBAR_AND_FOS, communicati
 const FOS_ANSWERS = {
   fosVulnerabilities: [VULNERABILITY_VALUES[0]],
   [VULNERABILITY_DETAILS[0].field]: 'Synthetic explanation.',
-  fosCourtAction: 'No', fosLendingStart: '2015-06-01', fosLendingAmount: '5000', fosBalancesPaid: 'Yes',
+  fosCourtAction: 'No', fosLendingStart: '2015-06-01', fosLendingAmount: '5000', fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15',
   fosIncomeEmployment: '1500', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
   fosSavings: 'No',
   fosOutHousing: '600', fosOutUtilities: '', fosOutFood: '', fosOutTransport: '',
   fosOtherExpenses: '', fosDependants: 'No', fosFurtherLending: 'No'
 };
 const TIMEBAR_ANSWERS = {
-  q1ThoughtBefore: 'No', q1AwarenessSource: 'From information I found myself', q1YesMonthYear: '', q1YesWhy: '',
-  q1NoMonthYear: 'June 2024', q1NoExplain: 'Synthetic.',
+  q1ThoughtBefore: 'No', q1AwarenessSource: 'From information I found myself',
+  q4ComplainedPromptly: 'Yes', q5RepaymentProblems: 'No',
+  q1AwarenessDate: '2024-06-10', q1AwarenessDateEstimated: 'Yes',
+  q1AwarenessExplanation: 'Synthetic.',
   q2Remember: 'No', q2RememberWhat: '', q2MadeThink: '', q2Explain: '', q2OtherMemory: '',
   q3Circumstances: 'No', q3Dates: '', q3Explain: ''
 };

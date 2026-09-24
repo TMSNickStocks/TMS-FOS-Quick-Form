@@ -30,12 +30,13 @@ const BASE = {
   lender: 'Test Lender', product: 'Credit card',
   fosVulnerabilities: [VULNERABILITY_NONE],
   fosCourtAction: 'No', fosLendingStart: '2015-06-01', fosLendingAmount: '5000',
-  fosBalancesPaid: 'Yes', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No',
+  fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No',
   confirmation: true, website: '', startedAt: Date.now() - 9999
 };
 const TIMEBAR = {
   communicationEvent: 'a test annual statement', communicationDate: 'March 2020',
   q1ThoughtBefore: 'No', q1AwarenessSource: 'From information I found myself',
+  q4ComplainedPromptly: 'Yes', q5RepaymentProblems: 'No',
   q2Remember: 'No', q3Circumstances: 'No'
 };
 const record = (over = {}) => {
@@ -88,9 +89,9 @@ test('the introduction shows on the first step and is hidden from every later on
 test('the introduction is hidden on the review step, which is always last', () => {
   // review is the final step in both sequences, so index > 0 always holds.
   assert.match(app, /FOS_ONLY:\s*\['details', 'fos1', 'fos2', 'fos3', 'review'\]/);
-  assert.match(app, /TIMEBAR_AND_FOS:\s*\['details', 'tb1', 'tb2', 'tb3', 'fos1', 'fos2', 'fos3', 'review'\]/);
+  assert.match(app, /TIMEBAR_AND_FOS:\s*\['details', 'tb1', 'tb2', 'tb3', 'tb4', 'fos1', 'fos2', 'fos3', 'review'\]/);
   for (const seq of [['details', 'fos1', 'fos2', 'fos3', 'review'],
-    ['details', 'tb1', 'tb2', 'tb3', 'fos1', 'fos2', 'fos3', 'review']]) {
+    ['details', 'tb1', 'tb2', 'tb3', 'tb4', 'fos1', 'fos2', 'fos3', 'review']]) {
     assert.equal(seq[seq.length - 1], 'review');
     assert.ok(seq.indexOf('review') > 0, 'review is never the first step, so the intro is hidden there');
   }

@@ -18,7 +18,7 @@ const FOS = {
   fosLendingStart: '2016-04-18',
   fosLendingStartUnknown: false,
   fosLendingAmount: '1200',
-  fosBalancesPaid: 'Yes',
+  fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15',
   fosIncomeEmployment: '1450.00', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '',
   fosSavings: 'Yes',
   fosSavingsAmount: '350',
@@ -36,6 +36,7 @@ const FOS = {
 const TIMEBAR = {
   communicationEvent: 'an annual statement showing the credit limit increase', communicationDate: 'March 2019',
   q1ThoughtBefore: 'No',
+  q4ComplainedPromptly: 'Yes', q5RepaymentProblems: 'No',
   q1AwarenessSource: 'When the basis of my current complaint was explained to me',
   q1NoMonthYear: 'January 2025',
   q1NoExplain: 'I only understood there might be a problem once it was explained to me.',
