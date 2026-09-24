@@ -59,6 +59,12 @@ QUESTION:
 CLIENT ANSWER:
   Yes
 
+[FOS_BALANCES_PAID_DATE]
+QUESTION:
+  What date was the account repaid?
+CLIENT ANSWER:
+  15/01/2020 [value: 2020-01-15]
+
 [FOS_INCOME] 6. Your finances when you borrowed
 QUESTION:
   Income type — Monthly net amount (£)

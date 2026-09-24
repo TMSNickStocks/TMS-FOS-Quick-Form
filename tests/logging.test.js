@@ -19,7 +19,7 @@ function serverFiles() {
 // Identifiers that must never appear inside a console.* call.
 const FORBIDDEN = [
   'reference', 'clientName', 'lender', 'product', 'communicationEvent', 'communicationDate',
-  'q1', 'q2', 'q3', 'fosVulnerab', 'fosLending', 'fosIncome', 'fosOut', 'fosSavings',
+  'q1', 'q2', 'q3', 'q4', 'q5', 'fosVulnerab', 'fosLending', 'fosIncome', 'fosOut', 'fosSavings',
   'fosDependants', 'fosCourt', 'fosBalances', 'fosOther', 'answers', 'prefill', 'token', 'email', 'html', 'raw', 'body',
   'ADMIN_ACCESS_KEY', 'PREFILL_ENCRYPTION_KEY', 'SECURITY_HMAC_KEY', 'GMAIL_'
 ];

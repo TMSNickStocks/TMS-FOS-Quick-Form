@@ -73,18 +73,6 @@
         </div>
       </fieldset>
 
-      <div id="q1Yes" class="conditional" hidden>
-        <div class="form-row">
-          <label for="q1YesMonthYear">Approximately when did you first think this?</label>
-          <input id="q1YesMonthYear" name="q1YesMonthYear" type="text" maxlength="60" autocomplete="off" placeholder="For example: March 2020, early 2020 or 2020">
-          <div class="help">Month/year</div>
-        </div>
-        <div class="form-row">
-          <label for="q1YesWhy">What happened or what information made you think or question whether the lender might have done something wrong?</label>
-          <textarea id="q1YesWhy" name="q1YesWhy" maxlength="800"></textarea>
-        </div>
-      </div>
-
       <div id="q1No" class="conditional" hidden>
         <fieldset class="form-row">
           <legend>When did you first think or become aware that the lender might have done something wrong?</legend>
@@ -96,15 +84,32 @@
             <label class="choice"><input type="radio" name="q1AwarenessSource" value="Other — please explain"><span>Other — please explain</span></label>
           </div>
         </fieldset>
-        <div class="form-row">
-          <label for="q1NoMonthYear">Approximate month/year</label>
-          <input id="q1NoMonthYear" name="q1NoMonthYear" type="text" maxlength="60" autocomplete="off" placeholder="For example: March 2020, early 2020 or 2020">
-        </div>
-        <div class="form-row">
-          <label for="q1NoExplain">Please briefly explain how you first became aware, if you can remember.</label>
-          <textarea id="q1NoExplain" name="q1NoExplain" maxlength="800"></textarea>
-        </div>
       </div>
+
+      <!-- The first-awareness group, asked once whichever answer was given
+           above (approved 2026-09-24). It replaces the two near-identical
+           date/explanation pairs the branches used to carry. -->
+      <div class="form-row">
+        <label for="q1AwarenessDate">When did you first think the lender acted unfairly?</label>
+        <input id="q1AwarenessDate" name="q1AwarenessDate" type="date" autocomplete="off">
+        <div class="help">If you are not sure of the exact day, give your best estimate and tell us below that it is an estimate.</div>
+      </div>
+
+      <div id="q1AwarenessDateEstimatedBlock" class="conditional" hidden>
+        <fieldset class="form-row">
+          <legend>Is this an estimated date?</legend>
+          <div class="radio-list">
+            <label class="choice"><input type="radio" name="q1AwarenessDateEstimated" value="Yes"><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="q1AwarenessDateEstimated" value="No"><span>No</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="form-row">
+        <label for="q1AwarenessExplanation">What was it that first made you aware the lender might not have acted fairly?</label>
+        <textarea id="q1AwarenessExplanation" name="q1AwarenessExplanation" maxlength="800"></textarea>
+      </div>
+
       <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
     </section>
 
@@ -174,6 +179,49 @@
           <textarea id="q3Explain" name="q3Explain" maxlength="1400" autocomplete="off"></textarea>
           <div class="help">Only include information you consider relevant to this question.</div>
         </div>
+      </div>
+      <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
+    </section>
+
+    <!-- Sections 4 and 5, approved 2026-09-24. -->
+    <section class="step" data-step="tb4" hidden>
+      <h2>4. Complaining to the lender</h2>
+      <fieldset class="form-row">
+        <legend>Did you complain to the lender as soon as payments became unaffordable?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="q4ComplainedPromptly" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="q4ComplainedPromptly" value="No"><span>No</span></label>
+        </div>
+      </fieldset>
+
+      <div id="q4DelayBlock" class="conditional" hidden>
+        <div class="form-row">
+          <label for="q4DelayReason">Please explain why there was a delay.</label>
+          <textarea id="q4DelayReason" name="q4DelayReason" maxlength="1400"></textarea>
+        </div>
+      </div>
+
+      <h2>5. Repayment difficulties</h2>
+      <fieldset class="form-row">
+        <legend>Did you have repayment problems?</legend>
+        <div class="radio-list">
+          <label class="choice"><input type="radio" name="q5RepaymentProblems" value="Yes"><span>Yes</span></label>
+          <label class="choice"><input type="radio" name="q5RepaymentProblems" value="No"><span>No</span></label>
+        </div>
+      </fieldset>
+
+      <div id="q5Block" class="conditional" hidden>
+        <div class="form-row">
+          <label for="q5StruggleDetail">When did you start to struggle to repay the borrowing? What was the impact of this, and how long did it last?</label>
+          <textarea id="q5StruggleDetail" name="q5StruggleDetail" maxlength="1400"></textarea>
+        </div>
+        <fieldset class="form-row">
+          <legend>Did the lender provide any support when you were struggling financially (for example, offering payment deferrals or a repayment plan)?</legend>
+          <div class="radio-list">
+            <label class="choice"><input type="radio" name="q5LenderSupport" value="Yes"><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="q5LenderSupport" value="No"><span>No</span></label>
+          </div>
+        </fieldset>
       </div>
       <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
     </section>
@@ -345,6 +393,15 @@
           <label class="choice"><input type="radio" name="fosBalancesPaid" value="No"><span>No</span></label>
         </div>
       </fieldset>
+
+      <!-- Approved 2026-09-24. Shown only after Yes. -->
+      <div id="fosBalancesPaidDateBlock" class="conditional" hidden>
+        <div class="form-row">
+          <label for="fosBalancesPaidDate">What date was the account repaid?</label>
+          <input id="fosBalancesPaidDate" name="fosBalancesPaidDate" type="date" autocomplete="off">
+          <div class="help">For example 01/01/2025</div>
+        </div>
+      </div>
       <div class="actions"><button class="secondary back" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
     </section>
 

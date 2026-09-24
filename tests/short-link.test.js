@@ -18,7 +18,7 @@ process.env.MAIL_MODE = 'fake';
 process.env.ADMIN_ACCESS_KEY = 'test-admin-key';
 
 const shortLink = require('../lib/short-link');
-const { encryptPrefill, decryptPrefill } = require('../lib/prefill');
+const { encryptPrefill, decryptPrefill, MAX_TTL_HOURS, DEFAULT_TTL_HOURS } = require('../lib/prefill');
 const { csrfCookieValue } = require('../lib/security');
 const { MODE_FOS_ONLY, MODE_TIMEBAR_AND_FOS } = require('../lib/questions');
 
@@ -180,13 +180,22 @@ test('4. no plaintext client information reaches Redis', async () => {
   assert.equal(res.statusCode, 200);
 });
 
-test('5. the TTL is at most 72 hours and never outlives the sealed token', async () => {
+test('5. the TTL is at most 30 days and never outlives the sealed token', async () => {
   await create(MATTER_FOS);
   const { ttlSeconds } = store.writes[0];
   assert.ok(ttlSeconds > 0, 'positive');
-  assert.ok(ttlSeconds <= 72 * 3600, `${ttlSeconds}s is within 72 hours`);
-  assert.ok(ttlSeconds > 71 * 3600, 'and close to it for a freshly minted token');
-  assert.equal(shortLink.MAX_TTL_SECONDS, 72 * 3600);
+  assert.ok(ttlSeconds <= 30 * 24 * 3600, `${ttlSeconds}s is within 30 days`);
+  assert.ok(ttlSeconds > 30 * 24 * 3600 - 3600, 'and close to it for a freshly minted token');
+  assert.equal(shortLink.MAX_TTL_SECONDS, 30 * 24 * 3600, '30 days, in seconds');
+  assert.equal(shortLink.MAX_TTL_SECONDS, 2592000, 'stated as a number as well, so a refactor cannot drift');
+});
+
+// The cap and the token lifetime are one number, read from one module. A
+// second copy is how a mapping ends up outliving the token it resolves to.
+test('5a. the Redis cap is the prefill module’s own ceiling, not a second copy', () => {
+  assert.equal(shortLink.MAX_TTL_SECONDS, MAX_TTL_HOURS * 3600);
+  assert.equal(MAX_TTL_HOURS, 720, '30 days in hours');
+  assert.equal(DEFAULT_TTL_HOURS, MAX_TTL_HOURS, 'a link with no configuration lasts the full 30 days');
 });
 
 test('5b. a shorter prefill expiry shortens the mapping with it', () => {
@@ -202,12 +211,14 @@ test('5b. a shorter prefill expiry shortens the mapping with it', () => {
   }
 });
 
-test('5c. a longer prefill expiry is still capped at 72 hours', () => {
+test('5c. a longer prefill expiry is still capped at 30 days', () => {
   const saved = process.env.PREFILL_TTL_HOURS;
-  process.env.PREFILL_TTL_HOURS = '720';
+  // Above the ceiling the configuration itself clamps to 720 hours, so the
+  // mapping is capped both by that clamp and by this one.
+  process.env.PREFILL_TTL_HOURS = '99999';
   try {
     const token = encryptPrefill(MATTER_FOS);
-    assert.equal(shortLink.ttlSecondsFor(token), 72 * 3600, 'capped, whatever the token says');
+    assert.equal(shortLink.ttlSecondsFor(token), 30 * 24 * 3600, 'capped, whatever the token says');
   } finally {
     if (saved === undefined) delete process.env.PREFILL_TTL_HOURS;
     else process.env.PREFILL_TTL_HOURS = saved;
@@ -656,7 +667,7 @@ test('20. email generation is untouched by short links', () => {
   const data = {
     ...MATTER_FOS, fosVulnerabilities: [VULNERABILITY_NONE],
     fosCourtAction: 'No', fosLendingStart: '2015-06-01', fosLendingAmount: '5000',
-    fosBalancesPaid: 'Yes', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No'
+    fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No'
   };
   const { text } = buildEmail(data, { submissionId: 'x', completedAt: '2026-09-16T12:00:00+01:00' });
   assert.equal(FORMAT_VERSION, 'TMS-FOS-V1');

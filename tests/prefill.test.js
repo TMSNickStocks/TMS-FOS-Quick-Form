@@ -6,7 +6,7 @@ test('tampered token rejected',()=>{const t=encryptPrefill({reference:'234567890
 
 // Regression: a non-numeric PREFILL_TTL_HOURS produced NaN, JSON.stringify
 // wrote it as null, and every issued link was rejected on arrival.
-const { ttlHours, DEFAULT_TTL_HOURS } = require('../lib/prefill');
+const { ttlHours, DEFAULT_TTL_HOURS, MAX_TTL_HOURS, prefillExpiry } = require('../lib/prefill');
 
 function withTtl(value, fn) {
   const saved = process.env.PREFILL_TTL_HOURS;
@@ -31,6 +31,24 @@ test('a valid TTL is honoured and clamped to sane bounds', () => {
   withTtl('72', () => assert.equal(ttlHours(), 72));
   withTtl('1', () => assert.equal(ttlHours(), 1));
   withTtl('99999', () => assert.equal(ttlHours(), 720));
+});
+
+// Approved 2026-09-24: a new link lasts 30 days.
+test('the default link expiry is 30 days', () => {
+  assert.equal(DEFAULT_TTL_HOURS, 720, '720 hours');
+  assert.equal(MAX_TTL_HOURS, 720, 'and that is also the ceiling a configured value is clamped to');
+  withTtl(undefined, () => assert.equal(ttlHours(), 720, 'an unconfigured deployment issues 30-day links'));
+});
+
+test('a sealed token minted with the default is valid for 30 days', () => {
+  withTtl(undefined, () => {
+    const token = encryptPrefill({ reference: '234567890' });
+    const expiry = prefillExpiry(token);
+    const days = (expiry - Date.now()) / 86400000;
+    assert.ok(days > 29.99 && days <= 30, `${days} days`);
+    // And it still resolves, which is the answer that matters to a client.
+    assert.deepEqual(decryptPrefill(token), { reference: '234567890' });
+  });
 });
 
 test('the issued envelope always carries a finite numeric expiry', () => {

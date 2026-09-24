@@ -25,13 +25,13 @@ The client must type the same 9-digit reference before any detail is shown.
 
 ## Links expire
 
-After 72 hours the link stops working and the client is told to ask for a new
+After 30 days the link stops working and the client is told to ask for a new
 one. Create a fresh link; there is nothing to clean up.
 
 ## If a client says the link does not work
 
 - Check the reference you entered matches the one they are typing (9 digits).
-- Check the link is under 72 hours old.
+- Check the link is under 30 days old.
 - Do not edit the link. The token is encrypted and any change invalidates it.
 
 ## Receiving answers

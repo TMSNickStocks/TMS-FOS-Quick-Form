@@ -18,7 +18,7 @@ const FOS_BASE = {
   fosCourtAction: 'No',
   fosLendingStart: '2015-06-01',
   fosLendingAmount: '5000',
-  fosBalancesPaid: 'Yes',
+  fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15',
   fosIncomeEmployment: '1500.00', fosIncomeBenefits: '', fosIncomeMaintenance: '', fosIncomePension: '320',
   fosSavings: 'No',
   fosOutHousing: '600', fosOutUtilities: '150.50', fosOutFood: '250', fosOutTransport: '',
@@ -29,7 +29,9 @@ const FOS_BASE = {
 const TIMEBAR_BASE = {
   communicationEvent: 'a test annual statement', communicationDate: 'March 2020',
   q1ThoughtBefore: 'No', q1AwarenessSource: 'From information I found myself',
-  q1NoMonthYear: 'June 2024', q1NoExplain: 'Synthetic explanation.',
+  q1AwarenessDate: '2024-06-10', q1AwarenessDateEstimated: 'Yes',
+  q1AwarenessExplanation: 'Synthetic explanation.',
+  q4ComplainedPromptly: 'Yes', q5RepaymentProblems: 'No',
   q2Remember: 'No', q2OtherMemory: 'Synthetic note.',
   q3Circumstances: 'No'
 };
@@ -468,11 +470,27 @@ test('block ids are stable and machine-readable in both modes', () => {
 });
 
 test('conditional Time-Bar branches change which blocks are recorded', () => {
-  const yes = idsOf(combined({ q1ThoughtBefore: 'Yes', q1YesMonthYear: 'March 2020', q1YesWhy: 'Because.' }).text);
-  assert.ok(yes.includes('Q1_DATE') && yes.includes('Q1_EXPLANATION'));
+  const yes = idsOf(combined({
+    q1ThoughtBefore: 'Yes',
+    q1AwarenessDate: '2020-03-01', q1AwarenessDateEstimated: 'Yes',
+    q1AwarenessExplanation: 'Because.'
+  }).text);
   assert.ok(!yes.includes('Q1_AWARENESS'), 'the branch not taken is not recorded');
   const no = idsOf(combined().text);
-  assert.ok(no.includes('Q1_AWARENESS') && !no.includes('Q1_EXPLANATION'));
+  assert.ok(no.includes('Q1_AWARENESS'), 'the awareness source is recorded for a No');
+
+  // The first-awareness group is asked once, so it is recorded in both
+  // branches rather than twice in either (approved 2026-09-24).
+  for (const ids of [yes, no]) {
+    assert.ok(ids.includes('Q1_FIRST_AWARENESS_DATE'));
+    assert.ok(ids.includes('Q1_FIRST_AWARENESS_CAUSE'));
+    assert.equal(ids.filter((id) => id.startsWith('Q1_FIRST_AWARENESS_DATE')).length, 2,
+      'the date and its estimate flag, once each');
+  }
+  // And nothing retired survives anywhere in the record.
+  for (const id of ['Q1_DATE', 'Q1_EXPLANATION', 'Q1_AWARENESS_DATE', 'Q1_AWARENESS_EXPLANATION']) {
+    assert.ok(!yes.includes(id) && !no.includes(id), `${id} was retired`);
+  }
 });
 
 test('a missing submission id is recorded as not provided rather than blank', () => {

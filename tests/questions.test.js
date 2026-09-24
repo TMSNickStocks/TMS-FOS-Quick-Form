@@ -226,7 +226,7 @@ test('the admin page hides the Time-Bar fields until the combined mode is chosen
 test('the client form adapts its step sequence to the questionnaire mode', () => {
   const app = fs.readFileSync('public/app.js', 'utf8');
   assert.match(app, /FOS_ONLY:\s*\['details', 'fos1', 'fos2', 'fos3', 'review'\]/);
-  assert.match(app, /TIMEBAR_AND_FOS:\s*\['details', 'tb1', 'tb2', 'tb3', 'fos1', 'fos2', 'fos3', 'review'\]/);
+  assert.match(app, /TIMEBAR_AND_FOS:\s*\['details', 'tb1', 'tb2', 'tb3', 'tb4', 'fos1', 'fos2', 'fos3', 'review'\]/);
   // the progress indicator is computed from the sequence, not hard-coded
   assert.match(app, /Step \$\{state\.index \+ 1\} of \$\{state\.steps\.length\}/);
 });
@@ -261,7 +261,7 @@ test('no representative-facing heading survives anywhere a client or reviewer ca
   const record = buildEmail({
     mode: MODE_FOS_ONLY, clientName: 'A', reference: '200000001', lender: 'L', product: 'Loan',
     fosVulnerabilities: [VULNERABILITY_NONE], fosCourtAction: 'No', fosLendingStart: '2015-06-01',
-    fosLendingAmount: '100', fosBalancesPaid: 'Yes', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No'
+    fosLendingAmount: '100', fosBalancesPaid: 'Yes', fosBalancesPaidDate: '2020-01-15', fosSavings: 'No', fosDependants: 'No', fosFurtherLending: 'No'
   }, { submissionId: 'x' });
   for (const old of OLD_HEADINGS) {
     assert.ok(!html.includes(old), `old heading fragment still in the form: ${old}`);
